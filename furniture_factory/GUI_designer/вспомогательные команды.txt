@@ -1,0 +1,4 @@
+"QPushButton" "{" "background-color: rgb(52, 154, 159);" "}""QPushButton::hover" "{" "background-color: rgb(48, 129, 159);" "}"  
+
+
+C:\Users\Yura\AppData\Local\Programs\Python\Python37\Scripts>pyuic5.exe -x C:\Users\Yura\PycharmProjects\pythonProject\furniture_factory\GUI_designer\FF_GUI_soft_mainv1.ui -o C:\Users\Yura\PycharmProjects\pythonProject\furniture_factory\FF_GUI_soft_mainv1.py
