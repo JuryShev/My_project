@@ -1,20 +1,20 @@
 from PyQt5 import QtWidgets
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QAction
 # Импортируем наш шаблон.
-from furniture_factory.start_window import Ui_MainWindow
-from furniture_factory.win_dialog_new_fuctory import Ui_Dialog as creat_dialog
-from PyQt5.QtWidgets import QWidget, QPushButton, QProgressBar, QVBoxLayout, QApplication
+from my_project.furniture_factory.start_window import Ui_MainWindow
+from my_project.furniture_factory.win_dialog_new_fuctory import Ui_Dialog as creat_dialog
+from my_project.furniture_factory.progress_bar import PB_Dialog as PB
+from PyQt5.QtWidgets import QWidget, QPushButton, QProgressBar, QVBoxLayout, QApplication,QMessageBox
 #from progress_bar import PB_Dialog
 from PyQt5.QtCore import QThread,pyqtSignal, QObject, pyqtSlot,QRunnable, QThreadPool
 import transliterate
-import furniture_factory.client_app as client_app
+import my_project.furniture_factory.client_app as client_app
 import time
 from PyQt5 import QtWidgets, QtCore
 import json
 import sys
 import traceback
 from functools import partial
-
 
 DEFAULT_STYLE = """
 QProgressBar{
@@ -176,6 +176,7 @@ class DialogCreatFactory(QDialog, creat_dialog):
 class mywindow(QtWidgets.QMainWindow):
 
     valueChanged = pyqtSignal(object)
+
     def __init__(self):
         super(mywindow, self).__init__()
         self.ui = Ui_MainWindow()
@@ -185,9 +186,13 @@ class mywindow(QtWidgets.QMainWindow):
         self.ui.pushButton_Creat.clicked.connect(self.btn_Creat)
         self.ui.pushButton_Open.clicked.connect(self.btn_Open)
         self._name_factory=''
+        self.finish = QAction("Quit", self)
+        self.finish.triggered.connect(self.closeEvent)
         self.valueChanged.connect(self.change_name)
         self.progress_bar=PopUpProgressB()
         self.status=0
+
+
 
     @property
     def name_factory(self):
@@ -219,14 +224,16 @@ class mywindow(QtWidgets.QMainWindow):
         print('open')
     def change_name(self):
         worker = Worker_2(self.cont_test)
-        worker_2 = Worker_2(partial(self.progress_bar.proc_counter, status=20)) # Any other args, kwargs are passed to the run function
+        worker_2 = Worker_2(partial(self.progress_bar.proc_counter, status=200)) # Any other args, kwargs are passed to the run function
         worker_2.kwargs['progress_callback'] = worker_2.signals.progress
         worker_2.signals.result.connect(self.progress_bar.print_output)
         worker_2.signals.finished.connect(self.progress_bar.thread_complete)
         worker_2.signals.progress.connect(self.progress_bar.on_count_changed)
         self.threadpool.start(worker)
         self.threadpool.start(worker_2)
+        self.progress_bar.setWindowModality(QtCore.Qt.ApplicationModal)
         self.progress_bar.show()
+
 
     def cont_test(self):
         a = 0
@@ -235,6 +242,16 @@ class mywindow(QtWidgets.QMainWindow):
             self.progress_bar.status_ = i
             print(i)
         return a
+
+    def closeEvent(self, event):
+        close = QMessageBox.question(self,
+                                     "QUIT",
+                                     "Sure?",
+                                     QMessageBox.Yes | QMessageBox.No)
+        if close == QMessageBox.Yes:
+            event.accept()
+        else:
+            event.ignore()
 
 
 
