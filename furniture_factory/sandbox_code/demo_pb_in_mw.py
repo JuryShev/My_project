@@ -4,7 +4,7 @@ from PyQt5.QtWidgets import QDialog, QAction
 from my_project.furniture_factory.start_window import Ui_MainWindow
 from my_project.furniture_factory.win_dialog_new_fuctory import Ui_Dialog as creat_dialog
 from my_project.furniture_factory.progress_bar import PB_Dialog as PB
-from PyQt5.QtWidgets import QWidget, QPushButton, QProgressBar, QVBoxLayout, QApplication,QMessageBox
+from PyQt5.QtWidgets import QWidget, QPushButton, QProgressBar, QVBoxLayout, QApplication,QMessageBox,QGraphicsDropShadowEffect
 #from progress_bar import PB_Dialog
 from PyQt5.QtCore import QThread,pyqtSignal, QObject, pyqtSlot,QRunnable, QThreadPool
 import transliterate
@@ -112,14 +112,43 @@ class PopUpProgressB(QWidget):
         super().__init__()
         self.setObjectName("Form")
         self.resize(689, 78)
-        self.setWindowFlag(QtCore.Qt.FramelessWindowHint)
+        self.setWindowFlags(QtCore.Qt.FramelessWindowHint)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
+        shadow = QGraphicsDropShadowEffect(blurRadius=12, xOffset=10, yOffset=4)
+        self.setGraphicsEffect(shadow)
+       #  self.setWindowFlags(
+       #
+       #
+       #  )
+        # QtCore.Qt.Window |
+        # QtCore.Qt.CustomizeWindowHint |
+        # QtCore.Qt.WindowTitleHint |
+        # QtCore.Qt.WindowCloseButtonHint |
+        # QtCore.Qt.WindowStaysOnTopHint
+
         self.setStyleSheet("background-color: rgb(74, 80, 106);")
         self.frame = QtWidgets.QFrame(self)
-        self.frame.setGeometry(QtCore.QRect(0, 0, 691, 39))
-        self.frame.setStyleSheet("background-color: rgb(123, 133, 175);")
+        # self.frame.setGeometry(QtCore.QRect(0, 0, 691, 39))
+        # self.frame.setStyleSheet("background-color: rgb(123, 133, 175);")
+        # self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        # self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        # self.frame.setObjectName("frame")
+
+        self.frame.setGeometry(QtCore.QRect(0, 0, 691, 81))
+        self.frame.setStyleSheet("\n"
+                                 "background-color: qlineargradient(spread:pad, x1:0.699227, y1:1, x2:0.641409, y2:0.085, stop:0 rgba(74, 80, 106, 255), stop:1 rgba(123, 133, 175, 255));")
+        self.frame.setInputMethodHints(QtCore.Qt.ImhNone)
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame.setObjectName("frame")
+
+        # self.frame_2 = QtWidgets.QFrame(self)
+        # self.frame_2.setGeometry(QtCore.QRect(0, 50, 691, 61))
+        # self.frame_2.setStyleSheet("background-color: rgb(74, 80, 106);")
+        # self.frame_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        # self.frame_2.setFrameShadow(QtWidgets.QFrame.Raised)
+        # self.frame_2.setObjectName("frame_2")
         self.pbar = QProgressBar(self)
         self.pbar.setEnabled(True)
         self.pbar.setGeometry(QtCore.QRect(0, 39, 695, 11))
@@ -129,7 +158,7 @@ class PopUpProgressB(QWidget):
         self.pbar.setFormat("")
         self.pbar.setObjectName("progressBar")
         self.label = QtWidgets.QLabel(self.frame)
-        self.label.setGeometry(QtCore.QRect(290, 10, 201, 20))
+        self.label.setGeometry(QtCore.QRect(250, 2, 271, 37))
 
         font = QtGui.QFont()
         font.setFamily("Roboto")
@@ -139,12 +168,14 @@ class PopUpProgressB(QWidget):
         font.setUnderline(False)
         font.setWeight(50)
         self.label.setFont(font)
-        self.label.setStyleSheet("color: rgb(255, 255, 255);")
+        self.label.setStyleSheet("color: rgb(255, 255, 255);\n"
+                                 "background-color: qlineargradient(spread:pad, x1:0.83, y1:1, x2:0.835227, y2:0, stop:0 rgba(109, 118, 156, 255), stop:1 rgba(123, 133, 175, 255));")
         self.label.setObjectName("label")
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Form", "Form"))
         self.label.setText(_translate("Form", "связь с сервером..."))
         self.status_=0
+
 
 
         #
@@ -250,7 +281,7 @@ class mywindow(QtWidgets.QMainWindow):
         print('open')
     def change_name(self):
         worker = Worker_2(self.cont_test)
-        worker_2 = Worker_2(partial(self.progress_bar.proc_counter, status=10)) # Any other args, kwargs are passed to the run function
+        worker_2 = Worker_2(partial(self.progress_bar.proc_counter, status=100)) # Any other args, kwargs are passed to the run function
         worker_2.kwargs['progress_callback'] = worker_2.signals.progress
         worker_2.signals.result.connect(self.progress_bar.print_output)
         worker_2.signals.finished.connect(self.progress_bar.thread_complete)
