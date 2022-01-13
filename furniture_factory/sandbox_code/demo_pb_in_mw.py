@@ -158,7 +158,7 @@ class PopUpProgressB(QWidget):
         self.pbar.setFormat("")
         self.pbar.setObjectName("progressBar")
         self.label = QtWidgets.QLabel(self.frame)
-        self.label.setGeometry(QtCore.QRect(250, 2, 271, 37))
+        self.label.setGeometry(QtCore.QRect(250, 2, 441, 37))
 
         font = QtGui.QFont()
         font.setFamily("Roboto")
