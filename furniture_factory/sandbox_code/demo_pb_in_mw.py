@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog, QAction
 # Импортируем наш шаблон.
 from my_project.furniture_factory.start_window import Ui_MainWindow
 from my_project.furniture_factory.win_dialog_new_fuctory import Ui_Dialog as creat_dialog
+from my_project.furniture_factory.CountCriterion_w import CountCr_2
 from my_project.furniture_factory.progress_bar import PB_Dialog as PB
 from PyQt5.QtWidgets import QWidget, QPushButton, QProgressBar, QVBoxLayout, QApplication,QMessageBox,QGraphicsDropShadowEffect
 #from progress_bar import PB_Dialog
@@ -33,8 +34,9 @@ QProgressBar::chunk {
 
 
 is_killed=False
-
-
+stack_window_Height=0
+stack_window_Width=0
+_translate = QtCore.QCoreApplication.translate
 
 
 class WorkerSignals(QObject):
@@ -117,6 +119,7 @@ class PopUpProgressB(QWidget):
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
         shadow = QGraphicsDropShadowEffect(blurRadius=12, xOffset=10, yOffset=4)
         self.setGraphicsEffect(shadow)
+
        #  self.setWindowFlags(
        #
        #
@@ -129,12 +132,6 @@ class PopUpProgressB(QWidget):
 
         self.setStyleSheet("background-color: rgb(74, 80, 106);")
         self.frame = QtWidgets.QFrame(self)
-        # self.frame.setGeometry(QtCore.QRect(0, 0, 691, 39))
-        # self.frame.setStyleSheet("background-color: rgb(123, 133, 175);")
-        # self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        # self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
-        # self.frame.setObjectName("frame")
-
         self.frame.setGeometry(QtCore.QRect(0, 0, 691, 81))
         self.frame.setStyleSheet("\n"
                                  "background-color: qlineargradient(spread:pad, x1:0.699227, y1:1, x2:0.641409, y2:0.085, stop:0 rgba(74, 80, 106, 255), stop:1 rgba(123, 133, 175, 255));")
@@ -142,13 +139,6 @@ class PopUpProgressB(QWidget):
         self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
         self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
         self.frame.setObjectName("frame")
-
-        # self.frame_2 = QtWidgets.QFrame(self)
-        # self.frame_2.setGeometry(QtCore.QRect(0, 50, 691, 61))
-        # self.frame_2.setStyleSheet("background-color: rgb(74, 80, 106);")
-        # self.frame_2.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        # self.frame_2.setFrameShadow(QtWidgets.QFrame.Raised)
-        # self.frame_2.setObjectName("frame_2")
         self.pbar = QProgressBar(self)
         self.pbar.setEnabled(True)
         self.pbar.setGeometry(QtCore.QRect(0, 39, 695, 11))
@@ -175,35 +165,121 @@ class PopUpProgressB(QWidget):
         self.setWindowTitle(_translate("Form", "Form"))
         self.label.setText(_translate("Form", "связь с сервером..."))
         self.status_=0
+        self.w_width=784
+        self.w_height = 272
 
 
-
-        #
-        # self.pbar.setGeometry(30, 40, 500, 75)
-        # self.layout = QVBoxLayout()
-        # self.layout.addWidget(self.pbar)
-        # self.setLayout(self.layout)
-        # self.setGeometry(300, 300, 550, 100)
-        # self.setWindowTitle('Progress Bar')
 
 
 
     def proc_counter(self, progress_callback, status=0):  # A slot takes no params
+        direct=0
         while self.status_<status:
-            for i in range(1, 100):
+            for i in range(1, 98):
                 time.sleep(0.01/(i*i))
                 progress_callback.emit(i)
+            if direct==0:
+                direct=1
+                self.pbar.setLayoutDirection(QtCore.Qt.RightToLeft)
 
+            else:
+                direct = 0
+                self.pbar.setLayoutDirection ( QtCore.Qt.LeftToRight )
         return 'finish_bar'
 
     def on_count_changed(self, value):
+
         self.pbar.setValue(value)
 
     def print_output(self, s):
+
         print(s)
 
     def thread_complete(self):
+
         self.hide()
+
+
+class CountCriterion(QWidget):
+    def __init__(self):
+        super( ).__init__()
+        self.setObjectName("Form")
+        self.resize(784, 272)
+        self.setStyleSheet("background-color: rgb(74, 80, 106);")
+        self.ButtonNext = QtWidgets.QPushButton(self)
+        self.ButtonNext.setGeometry(QtCore.QRect(650, 230, 101, 23))
+        font = QtGui.QFont()
+        font.setFamily("Roboto")
+        font.setPointSize(9)
+        font.setBold(False)
+        font.setWeight(50)
+        self.ButtonNext.setFont(font)
+        self.ButtonNext.setStyleSheet("background-color: rgb(168, 182, 240);\n"
+                                      "color: rgb(0, 0, 0);")
+        self.ButtonNext.setObjectName("ButtonNext")
+        self.spinBox_criterion = QtWidgets.QSpinBox(self)
+        self.spinBox_criterion.setGeometry(QtCore.QRect(222, 136, 91, 22))
+        font = QtGui.QFont()
+        font.setUnderline(False)
+        font.setStrikeOut(False)
+        self.spinBox_criterion.setFont(font)
+        self.spinBox_criterion.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.spinBox_criterion.setFrame(False)
+        self.spinBox_criterion.setAlignment(QtCore.Qt.AlignCenter)
+        self.spinBox_criterion.setObjectName("spinBox_criterion")
+        self.spinBox_departmen = QtWidgets.QSpinBox(self)
+        self.spinBox_departmen.setGeometry(QtCore.QRect(470, 136, 91, 22))
+        self.spinBox_departmen.setStyleSheet("background-color: rgb(255, 255, 255);")
+        self.spinBox_departmen.setAlignment(QtCore.Qt.AlignCenter)
+        self.spinBox_departmen.setObjectName("spinBox_departmen")
+        self.label_criterion = QtWidgets.QLabel(self)
+        self.label_criterion.setGeometry(QtCore.QRect(157, 105, 221, 20))
+        font = QtGui.QFont()
+        font.setFamily("Roboto")
+        font.setPointSize(11)
+        font.setBold(False)
+        font.setWeight(50)
+        self.label_criterion.setFont(font)
+        self.label_criterion.setStyleSheet("color: rgb(255, 255, 255);")
+        self.label_criterion.setObjectName("label_criterion")
+        self.label_departmen = QtWidgets.QLabel(self)
+        self.label_departmen.setGeometry(QtCore.QRect(415, 105, 201, 20))
+        font = QtGui.QFont()
+        font.setFamily("Roboto")
+        font.setPointSize(11)
+        font.setBold(False)
+        font.setWeight(50)
+        self.label_departmen.setFont(font)
+        self.label_departmen.setStyleSheet("color: rgb(255, 255, 255);")
+
+        self.label_departmen.setObjectName("label_departmen")
+        self.label_name_factory = QtWidgets.QLabel(self)
+        self.label_name_factory.setGeometry(QtCore.QRect(0, 40, 771, 31))
+        font = QtGui.QFont()
+        font.setFamily("Roboto")
+        font.setPointSize(14)
+        font.setBold(True)
+        font.setWeight(75)
+        self.label_name_factory.setFont(font)
+        self.label_name_factory.setStyleSheet("color: rgb(255, 255, 255);")
+        self.label_name_factory.setObjectName("label_name_factory")
+        self.label_name_factory.setAlignment(QtCore.Qt.AlignCenter)
+        #_translate = QtCore.QCoreApplication.translate
+        self.setWindowTitle(_translate("Form", "Form"))
+        self.ButtonNext.setText(_translate("Form", "ДАЛЕЕ"))
+        self.label_criterion.setText(_translate("Form", "введите количество критериев"))
+        self.label_departmen.setText(_translate("Form", "введите количество отделов"))
+        self.label_name_factory.setText(_translate("Form", " MyFactory"))
+        QtCore.QMetaObject.connectSlotsByName(self)
+        self.w_width=784
+        self.w_height = 272
+        self.value_criterion=0
+        self.value_departmen = 0
+        self.ButtonNext.clicked.connect(self.next)
+    def next(self):
+        self.value_criterion = self.spinBox_criterion.value()
+        self.value_departmen = self.spinBox_departmen.value()
+        print(f"value_criterion={self.value_criterion}\nvalue_departmen={self.value_departmen} ")
 
 
 
@@ -213,6 +289,7 @@ class DialogCreatFactory(QDialog, creat_dialog):
         super().__init__(parent)
         self.setupUi(self)
         self.name_factory = ''
+        self.name_factory_orig = ''
         self.setWindowTitle("Название предприятия")
 
         self.buttonBox.accepted.connect(self.acept_data)
@@ -222,9 +299,12 @@ class DialogCreatFactory(QDialog, creat_dialog):
     def acept_data(self):
 
         self.close()
-        self.name_factory = self.lineEdit.text()
-        if u'\u0400' <= self.name_factory <= u'\u04FF' or u'\u0500' <= self.name_factory <= u'\u052F':
-            self.name_factory = transliterate.translit(self.name_factory, reversed=True)
+        self.name_factory_orig = self.lineEdit.text()
+        if u'\u0400' <= self.name_factory_orig <= u'\u04FF' or u'\u0500' <= self.name_factory_orig <= u'\u052F':
+            self.name_factory = transliterate.translit(self.name_factory_orig, reversed=True)
+        else:
+            self.name_factory=self.name_factory_orig
+
 
     def reject_data(self):
         print('reject')
@@ -233,6 +313,7 @@ class DialogCreatFactory(QDialog, creat_dialog):
 class mywindow(QtWidgets.QMainWindow):
 
     valueChanged = pyqtSignal(object)
+    flagServerChange=pyqtSignal(object)
 
     def __init__(self):
         super(mywindow, self).__init__()
@@ -243,11 +324,17 @@ class mywindow(QtWidgets.QMainWindow):
         self.ui.pushButton_Creat.clicked.connect(self.btn_Creat)
         self.ui.pushButton_Open.clicked.connect(self.btn_Open)
         self._name_factory=''
+        self.name_factory_orig=''
+        self._flag_server=0
         self.finish = QAction("Quit", self)
         self.finish.triggered.connect(self.closeEvent)
         self.valueChanged.connect(self.change_name)
+        self.flagServerChange.connect(self.flag_server_change)
         self.progress_bar=PopUpProgressB()
-        self.status=0
+        self.start_w_width=784
+        self.start_w_height = 545
+
+
 
 
 
@@ -260,6 +347,15 @@ class mywindow(QtWidgets.QMainWindow):
         self._name_factory = value
         self.valueChanged.emit(value)
 
+    @property
+    def flag_server(self):
+        return self._flag_server
+
+    @flag_server.setter
+    def flag_server(self, value):
+        self._flag_server=value
+        self.flagServerChange.emit(value)
+
     def btn_Creat(self):
         dlg = DialogCreatFactory(self)
         dlg.exec()
@@ -268,6 +364,7 @@ class mywindow(QtWidgets.QMainWindow):
             dlg.name_factory=dlg.name_factory.replace(' ', '_')
             dlg.name_factory = dlg.name_factory.replace("'", '')
             self.name_factory=dlg.name_factory
+            self.name_factory_orig = dlg.name_factory_orig
             print(dlg.name_factory)
 
             # self.popup = PopUpProgressB()
@@ -281,7 +378,8 @@ class mywindow(QtWidgets.QMainWindow):
         print('open')
     def change_name(self):
         worker = Worker_2(self.cont_test)
-        worker_2 = Worker_2(partial(self.progress_bar.proc_counter, status=100)) # Any other args, kwargs are passed to the run function
+        worker.signals.finished.connect(self.thread_complete)
+        worker_2 = Worker_2(partial(self.progress_bar.proc_counter, status=20)) # Any other args, kwargs are passed to the run function
         worker_2.kwargs['progress_callback'] = worker_2.signals.progress
         worker_2.signals.result.connect(self.progress_bar.print_output)
         worker_2.signals.finished.connect(self.progress_bar.thread_complete)
@@ -292,14 +390,27 @@ class mywindow(QtWidgets.QMainWindow):
         self.progress_bar.setWindowModality(QtCore.Qt.ApplicationModal)
         self.progress_bar.show()
 
+    def flag_server_change(self):
+        print("new win")
+        stack_window_Height = count_crit.w_height
+        stack_window_Width = count_crit.w_width
+        count_crit.label_name_factory.setText(_translate("Form", self.name_factory_orig))
+        stack_window.setFixedHeight(stack_window_Height)
+        stack_window.setFixedWidth(stack_window_Width)
+        stack_window.setCurrentIndex(stack_window.currentIndex()+1)
+
 
     def cont_test(self):
         a = 0
-        for i in range(10000):
+        for i in range(22):
             time.sleep(0.5)
             self.progress_bar.status_ = i
             print(i)
         return a
+
+    def thread_complete(self):
+        print("complete")
+        self.flag_server=1
 
     def closeEvent(self, event):
         close = QMessageBox.question(self,
@@ -318,11 +429,31 @@ class mywindow(QtWidgets.QMainWindow):
 
 
 if __name__ == "__main__":
+
+
+
     import sys
 
     app = QtWidgets.QApplication([])
-    application = mywindow()
-    application.show()
+    start_w = mywindow()
+    count_crit=CountCriterion()
+    stack_window_Height=start_w.start_w_height
+    stack_window_Width=start_w.start_w_width
+    stack_window = QtWidgets.QStackedWidget()
+    stack_window.setStyleSheet("background-color: rgb(74, 80, 106);")
 
+    stack_window.addWidget(start_w)
+    stack_window.addWidget(count_crit)
+
+    stack_window.setFixedHeight(stack_window_Height)
+    stack_window.setFixedWidth(stack_window_Width)
+
+    stack_window.show()
+    # ########################################
+    # application = CountCriterion()
+    # application.show()
+    ############################################
+    # application = mywindow()
+    # application.show()
     sys.exit(app.exec())
 
