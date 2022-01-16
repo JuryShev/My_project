@@ -3,7 +3,7 @@ from PyQt5.QtWidgets import QDialog, QAction
 # Импортируем наш шаблон.
 from my_project.furniture_factory.start_window import Ui_MainWindow
 from my_project.furniture_factory.win_dialog_new_fuctory import Ui_Dialog as creat_dialog
-from my_project.furniture_factory.CountCriterion_w import CountCr_2
+from my_project.furniture_factory.CountCriterion_w import CountCr_2, CountCr
 from my_project.furniture_factory.progress_bar import PB_Dialog as PB
 from PyQt5.QtWidgets import QWidget, QPushButton, QProgressBar, QVBoxLayout, QApplication,QMessageBox,QGraphicsDropShadowEffect
 #from progress_bar import PB_Dialog
@@ -200,82 +200,16 @@ class PopUpProgressB(QWidget):
         self.hide()
 
 
-class CountCriterion(QWidget):
+class CountCriterion(QWidget, CountCr):
     def __init__(self):
         super( ).__init__()
-        self.setObjectName("Form")
-        self.resize(784, 272)
-        self.setStyleSheet("background-color: rgb(74, 80, 106);")
-        self.ButtonNext = QtWidgets.QPushButton(self)
-        self.ButtonNext.setGeometry(QtCore.QRect(650, 230, 101, 23))
-        font = QtGui.QFont()
-        font.setFamily("Roboto")
-        font.setPointSize(9)
-        font.setBold(False)
-        font.setWeight(50)
-        self.ButtonNext.setFont(font)
-        self.ButtonNext.setStyleSheet("background-color: rgb(168, 182, 240);\n"
-                                      "color: rgb(0, 0, 0);")
-        self.ButtonNext.setObjectName("ButtonNext")
-        self.spinBox_criterion = QtWidgets.QSpinBox(self)
-        self.spinBox_criterion.setGeometry(QtCore.QRect(222, 136, 91, 22))
-        font = QtGui.QFont()
-        font.setUnderline(False)
-        font.setStrikeOut(False)
-        self.spinBox_criterion.setFont(font)
-        self.spinBox_criterion.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.spinBox_criterion.setFrame(False)
-        self.spinBox_criterion.setAlignment(QtCore.Qt.AlignCenter)
-        self.spinBox_criterion.setObjectName("spinBox_criterion")
-        self.spinBox_departmen = QtWidgets.QSpinBox(self)
-        self.spinBox_departmen.setGeometry(QtCore.QRect(470, 136, 91, 22))
-        self.spinBox_departmen.setStyleSheet("background-color: rgb(255, 255, 255);")
-        self.spinBox_departmen.setAlignment(QtCore.Qt.AlignCenter)
-        self.spinBox_departmen.setObjectName("spinBox_departmen")
-        self.label_criterion = QtWidgets.QLabel(self)
-        self.label_criterion.setGeometry(QtCore.QRect(157, 105, 221, 20))
-        font = QtGui.QFont()
-        font.setFamily("Roboto")
-        font.setPointSize(11)
-        font.setBold(False)
-        font.setWeight(50)
-        self.label_criterion.setFont(font)
-        self.label_criterion.setStyleSheet("color: rgb(255, 255, 255);")
-        self.label_criterion.setObjectName("label_criterion")
-        self.label_departmen = QtWidgets.QLabel(self)
-        self.label_departmen.setGeometry(QtCore.QRect(415, 105, 201, 20))
-        font = QtGui.QFont()
-        font.setFamily("Roboto")
-        font.setPointSize(11)
-        font.setBold(False)
-        font.setWeight(50)
-        self.label_departmen.setFont(font)
-        self.label_departmen.setStyleSheet("color: rgb(255, 255, 255);")
-
-        self.label_departmen.setObjectName("label_departmen")
-        self.label_name_factory = QtWidgets.QLabel(self)
-        self.label_name_factory.setGeometry(QtCore.QRect(0, 40, 771, 31))
-        font = QtGui.QFont()
-        font.setFamily("Roboto")
-        font.setPointSize(14)
-        font.setBold(True)
-        font.setWeight(75)
-        self.label_name_factory.setFont(font)
-        self.label_name_factory.setStyleSheet("color: rgb(255, 255, 255);")
-        self.label_name_factory.setObjectName("label_name_factory")
-        self.label_name_factory.setAlignment(QtCore.Qt.AlignCenter)
-        #_translate = QtCore.QCoreApplication.translate
-        self.setWindowTitle(_translate("Form", "Form"))
-        self.ButtonNext.setText(_translate("Form", "ДАЛЕЕ"))
-        self.label_criterion.setText(_translate("Form", "введите количество критериев"))
-        self.label_departmen.setText(_translate("Form", "введите количество отделов"))
-        self.label_name_factory.setText(_translate("Form", " MyFactory"))
-        QtCore.QMetaObject.connectSlotsByName(self)
+        self.setupUi(self)
         self.w_width=784
         self.w_height = 272
         self.value_criterion=0
         self.value_departmen = 0
         self.ButtonNext.clicked.connect(self.next)
+
     def next(self):
         self.value_criterion = self.spinBox_criterion.value()
         self.value_departmen = self.spinBox_departmen.value()
