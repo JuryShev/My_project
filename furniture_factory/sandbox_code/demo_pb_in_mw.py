@@ -295,16 +295,50 @@ class Table_start_(QWidget, Table_start):
        # self.ButtonNext.clicked.connect(self.next)
 
     def next(self):
-
+        check_massage='~'
         print("1,0: %s" % self.tableWidget.item(0, 1).text())
         print(self.tableWidget.rowCount())
-        self.write_in_data(self.tableWidget, self.conf_criterion, 'conf_criterion')
-        self.write_in_data(self.tableWidget_2, self.departmen, 'departmen')
-        self.write_in_data(self.tableWidget_3, self.bonus_koeficient, 'bonus_koeficient')
+        check_massage=self.chec_type(self.tableWidget, self.conf_criterion)
+
+        if check_massage=='ok':
+            self.label_error.setText(_translate("Form", ''))
+            print(check_massage)
+            # self.write_in_data(self.tableWidget, self.conf_criterion, 'conf_criterion')
+            # self.write_in_data(self.tableWidget_2, self.departmen, 'departmen')
+            # self.write_in_data(self.tableWidget_3, self.bonus_koeficient, 'bonus_koeficient')
+        else:
+            self.label_error.setText(_translate("Form", check_massage))
+
+    def chec_type(self, tablewidget, dir_data):
+        list_key = list(dir_data.keys())
+        str_type_value=''
+        name_column_err=''
+        if len(list_key) != tablewidget.columnCount():
+            return ('Количество ключей не совпадает с количеством столбцов')
+        for row in range(tablewidget.rowCount()):
+            for column in range(tablewidget.columnCount()):
+                value = tablewidget.item(row, column).text()
+                type_value=type(dir_data[list_key[column]])
+                try:
+                    value=type_value(value)
+                except ValueError:
+                    name_column_err= tablewidget.horizontalHeaderItem(column).text()
+                    if type_value==int or type_value==float:
+                        str_type_value='должно быть число'
+                    return f"В столбце '{name_column_err}' {str_type_value}"
+                else:
+                    if type_value==str:
+                        value=value.replace(' ', '')
+                        if value.isdecimal():
+                            name_column_err = tablewidget.horizontalHeaderItem(column).text()
+                            str_type_value = 'должна быть строка'
+                            return f"В столбце '{name_column_err}' {str_type_value}"
 
 
 
-        pass
+        return 'ok'
+
+
     def write_in_data(self, tablewidget, dir_data, name_table):
 
         list_key=list(dir_data.keys())
