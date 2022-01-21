@@ -5,7 +5,7 @@ from database import FurnitureDtabase
 import database
 
 
-def full_check(json_data, stand_comand:dir):
+def full_check(json_data, stand_comand:dir, name_db):
 
     a = request.data
     #j = json.loads(a.decode('utf-8'))
@@ -13,7 +13,7 @@ def full_check(json_data, stand_comand:dir):
     if ch_headline != True:
         return ch_headline
 
-    my_db = FurnitureDtabase()
+    my_db = FurnitureDtabase(name_db=name_db)
     list_tables = my_db.get_tables()
     ch_table = check_table(json_data, list_tables)
     tables = json_data['tables']
@@ -71,22 +71,22 @@ def check_table(data, list_tables):
     return check
 
 app=Flask(__name__)
-db=FurnitureDtabase
+#db=FurnitureDtabase
 
 
 #_<int:comand>comand, data
-@app.route('/futniture/create_company', methods=['POST'])
-def create_company(comand=5000):
+@app.route('/futniture/create_company_<name_db>/', methods=['POST'])
+def create_company(name_db):
 
-    stand_comand={'comand': comand,
+    stand_comand={'comand': 5000,
                   'user': 'admin',
                   'db_comand':1}
     a=request.data
     j=json.loads(a.decode('utf-8'))
-    check_error=full_check(json_data=j, stand_comand=stand_comand)
+    check_error=full_check(json_data=j, stand_comand=stand_comand, name_db=name_db)
     if check_error != 'ok':
         return check_error
-    my_db=FurnitureDtabase()
+    my_db=FurnitureDtabase(name_db=name_db)
     ### Отправляться в метод add_row только в конструкции списка множектва (столбец 1, столбец 2)
     ###                                                                     данные 1    данные 2
 
@@ -98,20 +98,20 @@ def create_company(comand=5000):
             title = list(row.keys())
             value = [row[i] for i in title]
             my_db.add_row(name_table, tuple(title), tuple(value))
-    return 'Check table successfully'
+    return 'ok'
 
-@app.route('/futniture/add_personal', methods=['POST'])
-def add_personal(comand=2000):
+@app.route('/futniture_/add_personal', methods=['POST'])
+def add_personal(name_db):
 
-    stand_comand={'comand': comand,
+    stand_comand={'comand': 2000,
                   'user': 'admin',
                   'db_comand':1}
     a=request.data
     j=json.loads(a.decode('utf-8'))
-    check_error = full_check(json_data=j, stand_comand=stand_comand)
+    check_error = full_check(json_data=j, stand_comand=stand_comand, name_db=name_db)
     if check_error != 'ok':
         return check_error
-    my_db = FurnitureDtabase()
+    my_db = FurnitureDtabase(name_db=name_db)
     list_tables = j['tables']
     for name_table in list_tables:
        # my_db.clear_table(name_table)
@@ -185,4 +185,5 @@ def add_factory(comand=1111):
 #             return f'department named {check_value[:-1]} already exists'
 """***********************************************"""
 if __name__ == '__main__':
+    app.debug=True
     app.run( port=5000)
