@@ -6,9 +6,10 @@ from my_project.furniture_factory.win_dialog_new_fuctory import Ui_Dialog as cre
 from my_project.furniture_factory.CountCriterion_w import CountCr_2, CountCr
 from my_project.furniture_factory.Table_start import Table_start
 from my_project.furniture_factory.progress_bar import PB_Dialog as PB
-from PyQt5.QtWidgets import QWidget, QPushButton, QProgressBar, QVBoxLayout, QApplication,QMessageBox,QGraphicsDropShadowEffect
+from PyQt5.QtWidgets import QWidget, QPushButton, QProgressBar, QVBoxLayout, QApplication,\
+    QMessageBox,QGraphicsDropShadowEffect,QStyledItemDelegate,QLineEdit
 #from progress_bar import PB_Dialog
-from PyQt5.QtCore import QThread,pyqtSignal, QObject, pyqtSlot,QRunnable, QThreadPool
+from PyQt5.QtCore import QThread,pyqtSignal, QObject, pyqtSlot,QRunnable, QThreadPool,QRegExp
 import transliterate
 import my_project.furniture_factory.client_app as client_app
 import time
@@ -39,6 +40,18 @@ stack_window_Height=0
 stack_window_Width=0
 name_factory_orig=''
 _translate = QtCore.QCoreApplication.translate
+
+class NumericDelegate(QStyledItemDelegate):
+    def __init__(self):
+        super().__init__()
+        self.index=2
+    def createEditor(self, parent, option, index):
+        editor = super(NumericDelegate, self).createEditor(parent, option, index)
+        if isinstance(editor, QLineEdit):
+            reg_ex = QRegExp("[0-9]+.?[0-9]{,2}")
+            validator = QtGui.QRegExpValidator(reg_ex, editor)
+            editor.setValidator(validator)
+        return editor
 
 
 class WorkerSignals(QObject):
@@ -109,7 +122,6 @@ class Worker_2(QRunnable):
         finally:
             self.signals.finished.emit()  # Done
 
-
 class PopUpProgressB(QWidget):
 
     def __init__(self):
@@ -166,7 +178,7 @@ class PopUpProgressB(QWidget):
         _translate = QtCore.QCoreApplication.translate
         self.setWindowTitle(_translate("Form", "Form"))
         self.label.setText(_translate("Form", "связь с сервером..."))
-        self.status_=0
+        self.status_='on'
         self.w_width=784
         self.w_height = 272
 
@@ -174,9 +186,9 @@ class PopUpProgressB(QWidget):
 
 
 
-    def proc_counter(self, progress_callback, status=0):  # A slot takes no params
+    def proc_counter(self, progress_callback, status='on'):  # A slot takes no params
         direct=0
-        while self.status_<status:
+        while self.status_==status:
             for i in range(1, 98):
                 time.sleep(0.01/(i*i))
                 progress_callback.emit(i)
@@ -200,7 +212,6 @@ class PopUpProgressB(QWidget):
     def thread_complete(self):
 
         self.hide()
-
 
 class CountCriterion(QWidget, CountCr):
     def __init__(self):
@@ -239,8 +250,6 @@ class CountCriterion(QWidget, CountCr):
         if action == new_action:
             print("new")
 
-
-
 class DialogCreatFactory(QDialog, creat_dialog):
     def __init__(self, parent):
         super().__init__(parent)
@@ -268,46 +277,85 @@ class DialogCreatFactory(QDialog, creat_dialog):
         self.close()
 
 class Table_start_(QWidget, Table_start):
+    signal_send_data = pyqtSignal(object)
+    signal_receive_data = pyqtSignal(object)
+
     def __init__(self):
         super( ).__init__()
+        self.threadpool = QThreadPool()
         self.setupUi(self)
         self.w_width=1045
         self.w_height = 545
         self.value_criterion=0
         self.value_departmen = 0
+        self.progress_bar = PopUpProgressB()
         self.ButtonNext.clicked.connect(self.next)
         self.data_send={
                         "comand": 5000,
                         "user": "admin",
                         "db_comand": 1,
                         "tables": {"conf_criterion":[],
-                                    "departmen":   [],
+                                    "department":   [],
                                     "bonus_koeficient":[]
                                     }}
         self.conf_criterion={"title_criterion":"Порядок_1",
                                         "max_coef": 5,
                                         "w_coef":5.0}
-        self.departmen={"title": "Отдел_1"}
+        self.department={"title": "Отдел_1"}
         self.bonus_koeficient={"percentage_of_profits":2.0}
-
+        self.flag_send_data=0
+        self.flag_receive_data=0
+        self.signal_send_data.connect(self.start_send_data)
+        self.signal_receive_data.connect(self.start_work_window)
+        # delegate = NumericDelegate(self.tableWidget)
+        # self.tableWidget.setItemDelegate(delegate)
 
         print("ok")
        # self.ButtonNext.clicked.connect(self.next)
 
+    @property
+    def check_send_data(self):
+        return self.flag_send_data
+
+    @check_send_data.setter
+    def check_send_data(self, value):
+        self._flag_send_data = value
+        self.signal_send_data.emit(value)
+
+    @property
+    def check_receive_data(self):
+        return self.flag_receive_data
+
+    @check_receive_data.setter
+    def check_receive_data(self, value):
+        self.flag_receive_data = value
+        self.flag_receive_data.emit(value)
+
+
     def next(self):
-        check_massage='~'
+        check_massage={'conf_criterion':'',
+                       'department': '',
+                       'bonus_koeficient':''}
         print("1,0: %s" % self.tableWidget.item(0, 1).text())
         print(self.tableWidget.rowCount())
-        check_massage=self.chec_type(self.tableWidget, self.conf_criterion)
+        check_massage['conf_criterion']=self.chec_type(self.tableWidget, self.conf_criterion)
+        check_massage['department'] = self.chec_type(self.tableWidget_2, self.department)
+        check_massage['bonus_koeficient'] = self.chec_type(self.tableWidget_3, self.bonus_koeficient)
+        check_massage_v=''
+        for check_massage_k in check_massage:
+            check_massage_v=check_massage[check_massage_k]
+            if check_massage_v!='ok':
+                break
 
-        if check_massage=='ok':
-            self.label_error.setText(_translate("Form", ''))
-            print(check_massage)
-            # self.write_in_data(self.tableWidget, self.conf_criterion, 'conf_criterion')
-            # self.write_in_data(self.tableWidget_2, self.departmen, 'departmen')
-            # self.write_in_data(self.tableWidget_3, self.bonus_koeficient, 'bonus_koeficient')
+        if check_massage_v!='ok':
+            self.label_error.setText(_translate("Form", check_massage_v))
         else:
-            self.label_error.setText(_translate("Form", check_massage))
+            self.label_error.setText(_translate("Form", ''))
+            print(check_massage_v)
+            self.write_in_data(self.tableWidget, self.conf_criterion, 'conf_criterion')
+            self.write_in_data(self.tableWidget_2, self.department, 'department')
+            self.write_in_data(self.tableWidget_3, self.bonus_koeficient, 'bonus_koeficient')
+            self.check_send_data=1
 
     def chec_type(self, tablewidget, dir_data):
         list_key = list(dir_data.keys())
@@ -338,7 +386,6 @@ class Table_start_(QWidget, Table_start):
 
         return 'ok'
 
-
     def write_in_data(self, tablewidget, dir_data, name_table):
 
         list_key=list(dir_data.keys())
@@ -354,11 +401,6 @@ class Table_start_(QWidget, Table_start):
 
             self.data_send["tables"][name_table].append(dir_data.copy())
 
-
-
-
-
-
     def contextMenuEvent(self, event):
         context_menu=QtWidgets.QMenu(self)
 
@@ -368,6 +410,50 @@ class Table_start_(QWidget, Table_start):
 
         if action == new_action:
             print("new")
+
+    def start_work_window(self):
+        print("start_work_window")
+
+    def start_send_data(self):
+        thred_send_data = Worker_2(self.send_data)
+        thred_send_data.signals.finished.connect(self.thread_complete)
+
+        thred_progress_bar = Worker_2(partial(self.progress_bar.proc_counter, status='on')) # Any other args, kwargs are passed to the run function
+        thred_progress_bar.kwargs['progress_callback'] = thred_progress_bar.signals.progress
+        thred_progress_bar.signals.result.connect(self.progress_bar.print_output)
+        thred_progress_bar.signals.finished.connect(self.progress_bar.thread_complete)
+        thred_progress_bar.signals.progress.connect(self.progress_bar.on_count_changed)
+        self.threadpool.start(thred_send_data)
+        self.threadpool.start(thred_progress_bar)
+
+        self.progress_bar.setWindowModality(QtCore.Qt.ApplicationModal)
+        self.progress_bar.show()
+
+    def cont_test(self):
+        a = 0
+        for i in range(5):
+            time.sleep(0.5)
+            self.progress_bar.status_ = i
+            print(i)
+        return a
+
+    def send_data(self):
+        self.progress_bar.status_ = 'on'
+        result=client.add_criterion(name_db=start_w._name_factory, data_send=self.data_send).content.decode("utf-8")
+        self.progress_bar.status_ = result
+
+
+    def thread_complete(self):
+
+        if self.progress_bar.status_ == 'ok':
+            print(self.progress_bar.status_)
+
+        else :
+            self.label_error.setText(_translate("Form", self.progress_bar.status_))
+            print(self.progress_bar.status_)
+
+
+
 
 class mywindow(QtWidgets.QMainWindow):
 
@@ -392,10 +478,6 @@ class mywindow(QtWidgets.QMainWindow):
         self.progress_bar=PopUpProgressB()
         self.start_w_width=784
         self.start_w_height = 545
-
-
-
-
 
     @property
     def name_factory(self):
@@ -436,9 +518,9 @@ class mywindow(QtWidgets.QMainWindow):
     def btn_Open(self):
         print('open')
     def change_name(self):
-        worker = Worker_2(self.cont_test)
+        worker = Worker_2(self.start_creat_factory)
         worker.signals.finished.connect(self.thread_complete)
-        worker_2 = Worker_2(partial(self.progress_bar.proc_counter, status=3)) # Any other args, kwargs are passed to the run function
+        worker_2 = Worker_2(partial(self.progress_bar.proc_counter, status='on')) # Any other args, kwargs are passed to the run function
         worker_2.kwargs['progress_callback'] = worker_2.signals.progress
         worker_2.signals.result.connect(self.progress_bar.print_output)
         worker_2.signals.finished.connect(self.progress_bar.thread_complete)
@@ -458,7 +540,6 @@ class mywindow(QtWidgets.QMainWindow):
         stack_window.setFixedWidth(stack_window_Width)
         stack_window.setCurrentIndex(stack_window.currentIndex()+1)
 
-
     def cont_test(self):
         a = 0
         for i in range(5):
@@ -467,9 +548,15 @@ class mywindow(QtWidgets.QMainWindow):
             print(i)
         return a
 
+    def start_creat_factory(self):
+        result = client.add_db(name_db=self._name_factory, comand=1111, db_comand=1).content.decode("utf-8")
+        self.progress_bar.status_ = result
+
     def thread_complete(self):
-        print("complete")
-        self.flag_server=1
+        print(self.progress_bar.status_)
+        if self.progress_bar.status_=='ok':
+            self.flag_server=1
+            self.progress_bar.status_ = ''
 
     def closeEvent(self, event):
         close = QMessageBox.question(self,
@@ -483,16 +570,13 @@ class mywindow(QtWidgets.QMainWindow):
         else:
             event.ignore()
 
-
-
-
-
 if __name__ == "__main__":
 
 
 
     import sys
 
+    client = client_app.ServerConnector('0', 'localhost', 5000)
     app = QtWidgets.QApplication([])
     start_w = mywindow()
     count_crit=CountCriterion()
