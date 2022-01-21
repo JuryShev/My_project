@@ -16,3 +16,11 @@ class ServerConnector():
 
         return result
 
+    def add_criterion(self, name_db,  data_send):
+        result = requests.post(f"{self.url}/futniture/create_company_{name_db}/",
+                               json=data_send)
+
+        return result
+
+
+
