@@ -85,7 +85,7 @@ class FurnitureDtabase:
 
         ) as connection:
             mycursor = connection.cursor()
-            mysql_comand = (f'SHOW COLUMNS FROM fur_database.{name_table}')
+            mysql_comand = (f'SHOW COLUMNS FROM {self.database}.{name_table}')
             mycursor.execute(mysql_comand)
             show_columns=mycursor.fetchall()
             column=[]
@@ -123,7 +123,7 @@ class FurnitureDtabase:
         ) as connection:
             list_table_=[]
             mycursor = connection.cursor()
-            mysql_comand = (f'SHOW TABLES FROM fur_database')
+            mysql_comand = (f'SHOW TABLES FROM {self.database}')
             mycursor.execute(mysql_comand)
             list_table = mycursor.fetchall()
             for i in list_table:
