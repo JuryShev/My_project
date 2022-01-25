@@ -182,10 +182,6 @@ class PopUpProgressB(QWidget):
         self.w_width=784
         self.w_height = 272
 
-
-
-
-
     def proc_counter(self, progress_callback, status='on'):  # A slot takes no params
         direct=0
         while self.status_==status:
@@ -224,18 +220,18 @@ class CountCriterion(QWidget, CountCr):
         self.ButtonNext.clicked.connect(self.next)
 
     def next(self):
-        self.value_criterion = int(self.spinBox_criterion.value())
-        self.value_departmen = int(self.spinBox_departmen.value())
-        if self.value_departmen>0 and self.value_criterion>0:
+        table_start_.value_criterion = int(self.spinBox_criterion.value())
+        table_start_.value_department = int(self.spinBox_departmen.value())
+        if table_start_.value_department>0 and table_start_.value_criterion>0:
             stack_window_Height = table_start_.w_height
             stack_window_Width = table_start_.w_width
             table_start_.label_name_factory.setText(_translate("Form", start_w.name_factory_orig))
-            table_start_.tableWidget.setRowCount(self.value_criterion)
-            table_start_.tableWidget_2.setRowCount(self.value_departmen)
+            table_start_.tableWidget.setRowCount(table_start_.value_criterion)
+            table_start_.tableWidget_2.setRowCount(table_start_.value_department)
             stack_window.setFixedHeight(stack_window_Height)
             stack_window.setFixedWidth(stack_window_Width)
             stack_window.setCurrentIndex(stack_window.currentIndex() + 1)
-            print(f"value_criterion={self.value_criterion}\nvalue_departmen={self.value_departmen} ")
+            print(f"value_criterion={table_start_.value_criterion}\nvalue_departmen={table_start_.value_department} ")
         else:
             self.label_error.setText(_translate("Form", "Значение должны быть больше нуля"))
             print('критерий равен 0')
@@ -287,8 +283,12 @@ class Table_start_(QWidget, Table_start):
         self.w_width=1045
         self.w_height = 545
         self.value_criterion=0
-        self.value_departmen = 0
+        self.value_department = 0
         self.progress_bar = PopUpProgressB()
+        self.pushButton_3.clicked.connect(self.add_row_criterion)
+        self.pushButton_2.clicked.connect(self.drop_row_criterion)
+        self.pushButton_4.clicked.connect(self.add_row_department)
+        self.pushButton_5.clicked.connect(self.drop_row_department)
         self.ButtonNext.clicked.connect(self.next)
         self.data_send={
                         "comand": 5000,
@@ -331,17 +331,53 @@ class Table_start_(QWidget, Table_start):
         self.flag_receive_data = value
         self.flag_receive_data.emit(value)
 
+    def add_row_criterion(self):
+        self.value_criterion=self.value_criterion+1
+        self.tableWidget.setRowCount(self.value_criterion)
+
+    def drop_row_criterion(self):
+        self.value_criterion=self.value_criterion-1
+        self.tableWidget.setRowCount(self.value_criterion)
+
+    def add_row_department(self):
+
+        self.value_department=self.value_department+1
+        self.tableWidget_2.setRowCount(self.value_department)
+
+    def drop_row_department(self):
+        self.value_department=self.value_department-1
+        self.tableWidget_2.setRowCount(self.value_department)
 
     def next(self):
         check_massage={'conf_criterion':'',
                        'department': '',
-                       'bonus_koeficient':''}
+                       'bonus_koeficient':''
+                       # 'W_coef':'',
+                       # 'percentage_of_profits':'',
+                       # 'conf_criterion_duplicate_name':'',
+                       #  'department_duplicate_name':'',
+                       }
         print("1,0: %s" % self.tableWidget.item(0, 1).text())
         print(self.tableWidget.rowCount())
+        check_massage_v = ''
         check_massage['conf_criterion']=self.chec_type(self.tableWidget, self.conf_criterion)
         check_massage['department'] = self.chec_type(self.tableWidget_2, self.department)
         check_massage['bonus_koeficient'] = self.chec_type(self.tableWidget_3, self.bonus_koeficient)
-        check_massage_v=''
+
+        for check_massage_k in check_massage:
+            check_massage_v=check_massage[check_massage_k]
+            if check_massage_v!='ok':
+                break
+
+        if check_massage_v!='ok':
+            self.label_error.setText(_translate("Form", check_massage_v))
+            return None
+
+        check_massage['W_coef']=self.check_procent(self.tableWidget,2)
+        check_massage['percentage_of_profits'] = self.check_procent(self.tableWidget_3, 0)
+        check_massage['conf_criterion_duplicate_name']=self.check_duplicate(self.tableWidget, self.conf_criterion)
+        check_massage['department_duplicate_name'] = self.check_duplicate(self.tableWidget_2, self.department)
+
         for check_massage_k in check_massage:
             check_massage_v=check_massage[check_massage_k]
             if check_massage_v!='ok':
@@ -365,7 +401,11 @@ class Table_start_(QWidget, Table_start):
             return ('Количество ключей не совпадает с количеством столбцов')
         for row in range(tablewidget.rowCount()):
             for column in range(tablewidget.columnCount()):
-                value = tablewidget.item(row, column).text()
+                try:
+                    value = tablewidget.item(row, column).text()
+                except AttributeError :
+                        name_column_err = tablewidget.horizontalHeaderItem(column).text()
+                        return f"В столбце '{name_column_err}' есть пустые ячейки"
                 type_value=type(dir_data[list_key[column]])
                 try:
                     value=type_value(value)
@@ -381,10 +421,34 @@ class Table_start_(QWidget, Table_start):
                             name_column_err = tablewidget.horizontalHeaderItem(column).text()
                             str_type_value = 'должна быть строка'
                             return f"В столбце '{name_column_err}' {str_type_value}"
-
-
-
         return 'ok'
+
+    def check_duplicate(self, tablewidget,  dir_data):
+        ind_str_value = []
+        set_name=set()
+
+        for ind, val in enumerate(dir_data.values()):
+            if type(val) == str:
+                ind_str_value.append(ind)
+
+        for column in ind_str_value:
+            name_column_err=tablewidget.horizontalHeaderItem(column).text()
+            for row in range(tablewidget.rowCount()):
+                if tablewidget.item(row, column).text() in set_name:
+                    return f"В столбце '{name_column_err}' имя '{tablewidget.item(row, column).text()}' имеет дубликат"
+                set_name.add(tablewidget.item(row, column).text())
+        return 'ok'
+
+    def check_procent(self, tablewidget, column:int):
+        str_check_procent = 'cумма процентов привышает 1'
+        full_value=0
+        for row in range(tablewidget.rowCount()):
+            value = tablewidget.item(row, column).text()
+            full_value+=float(value)
+        if full_value>1:
+            name_column_err = tablewidget.horizontalHeaderItem(column).text()
+            return f"В столбце '{name_column_err}' {str_check_procent}"
+        return  'ok'
 
     def write_in_data(self, tablewidget, dir_data, name_table):
 
@@ -415,7 +479,7 @@ class Table_start_(QWidget, Table_start):
         print("start_work_window")
 
     def start_send_data(self):
-        thred_send_data = Worker_2(self.send_data)
+        thred_send_data = Worker_2(self.cont_test)
         thred_send_data.signals.finished.connect(self.thread_complete)
 
         thred_progress_bar = Worker_2(partial(self.progress_bar.proc_counter, status='on')) # Any other args, kwargs are passed to the run function
@@ -433,15 +497,14 @@ class Table_start_(QWidget, Table_start):
         a = 0
         for i in range(5):
             time.sleep(0.5)
-            self.progress_bar.status_ = i
             print(i)
+        self.progress_bar.status_ = 'ok'
         return a
 
     def send_data(self):
         self.progress_bar.status_ = 'on'
         result=client.add_criterion(name_db=start_w._name_factory, data_send=self.data_send).content.decode("utf-8")
         self.progress_bar.status_ = result
-
 
     def thread_complete(self):
 
@@ -451,6 +514,8 @@ class Table_start_(QWidget, Table_start):
         else :
             self.label_error.setText(_translate("Form", self.progress_bar.status_))
             print(self.progress_bar.status_)
+
+
 
 
 
@@ -518,7 +583,7 @@ class mywindow(QtWidgets.QMainWindow):
     def btn_Open(self):
         print('open')
     def change_name(self):
-        worker = Worker_2(self.start_creat_factory)
+        worker = Worker_2(self.cont_test)
         worker.signals.finished.connect(self.thread_complete)
         worker_2 = Worker_2(partial(self.progress_bar.proc_counter, status='on')) # Any other args, kwargs are passed to the run function
         worker_2.kwargs['progress_callback'] = worker_2.signals.progress
@@ -544,8 +609,8 @@ class mywindow(QtWidgets.QMainWindow):
         a = 0
         for i in range(5):
             time.sleep(0.5)
-            self.progress_bar.status_ = i
             print(i)
+        self.progress_bar.status_ = 'ok'
         return a
 
     def start_creat_factory(self):
