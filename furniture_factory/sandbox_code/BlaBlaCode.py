@@ -1,82 +1,52 @@
-import logging
-import random
+#!/usr/bin/python3
+# -*- coding: utf-8 -*-
+
 import sys
-from time import sleep
-
-from PyQt5.QtCore import QMutex, QObject, QThread, pyqtSignal
-from PyQt5.QtWidgets import (
-    QApplication,
-    QLabel,
-    QMainWindow,
-    QPushButton,
-    QVBoxLayout,
-    QWidget,
-)
-
-logging.basicConfig(format="%(message)s", level=logging.INFO)
-
-balance = 100.00
-mutex = QMutex()
-
-class AccountManager(QObject):
-    finished = pyqtSignal()
-    updatedBalance = pyqtSignal()
-
-    def withdraw(self, person, amount):
-        logging.info("%s wants to withdraw $%.2f...", person, amount)
-        global balance
-        mutex.lock()
-        if balance - amount >= 0:
-            sleep(1)
-            balance -= amount
-            logging.info("-$%.2f accepted", amount)
-        else:
-            logging.info("-$%.2f rejected", amount)
-        logging.info("===Balance===: $%.2f", balance)
-        self.updatedBalance.emit()
-        mutex.unlock()
-        self.finished.emit()
-
-class Window(QMainWindow):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setupUi()
-
-    def setupUi(self):
-        self.setWindowTitle("Account Manager")
-        self.resize(200, 150)
-        self.centralWidget = QWidget()
-        self.setCentralWidget(self.centralWidget)
-        button = QPushButton("Withdraw Money!")
-        button.clicked.connect(self.startThreads)
-        self.balanceLabel = QLabel(f"Current Balance: ${balance:,.2f}")
-        layout = QVBoxLayout()
-        layout.addWidget(self.balanceLabel)
-        layout.addWidget(button)
-        self.centralWidget.setLayout(layout)
-
-    def startThreads(self):
-        self.threads.clear()
-        people = {
-            "Alice": random.randint(100, 10000) / 100,
-            "Bob": random.randint(100, 10000) / 100,
-        }
-        self.threads = [
-            self.createThread(person, amount)
-            for person, amount in people.items()
-        ]
-        for thread in self.threads:
-            thread.start()
-
-    def updateBalance(self):
-        self.balanceLabel.setText(f"Current Balance: ${balance:,.2f}")
+from PyQt5.QtWidgets import QWidget, QApplication
+from PyQt5.QtGui import QPainter, QColor, QBrush
 
 
+class Example(QWidget):
 
-app = QApplication(sys.argv)
+    def __init__(self):
+        super().__init__()
 
-window = Window()
+        self.initUI()
 
-window.show()
 
-app.exec()
+    def initUI(self):
+
+        self.setGeometry(300, 300, 350, 100)
+        self.setWindowTitle('Colours')
+        self.show()
+
+
+    def paintEvent(self, e):
+
+        qp = QPainter()
+        qp.begin(self)
+        self.drawRectangles(qp)
+        qp.end()
+
+
+    def drawRectangles(self, qp):
+
+        col = QColor(0, 0, 0)
+        col.setNamedColor('#d4d4d4')
+        qp.setPen(col)
+
+        qp.setBrush(QColor(200, 0, 0))
+        qp.drawRect(10, 15, 90, 60)
+
+        qp.setBrush(QColor(255, 80, 0, 160))
+        qp.drawRect(130, 15, 90, 60)
+
+        qp.setBrush(QColor(25, 0, 90, 200))
+        qp.drawRect(250, 15, 90, 60)
+
+
+if __name__ == '__main__':
+
+    app = QApplication(sys.argv)
+    ex = Example()
+    sys.exit(app.exec_())
