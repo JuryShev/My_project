@@ -43,10 +43,6 @@ def check_headline(data, stand_comand:dict):
     if data['db_comand'] != stand_comand['db_comand']:
         print(f"command {data['db_comand']} does not allow adding data")
         return f"command {data['db_comand']} does not allow adding data"
-
-
-
-
     return flag_check
 
 def check_type(data, name_table, type_columns):
@@ -75,7 +71,7 @@ app=Flask(__name__)
 
 
 #_<int:comand>comand, data
-@app.route('/futniture/create_company_<name_db>/', methods=['POST'])
+@app.route('/furniture/create_company_<name_db>/', methods=['POST'])
 def create_company(name_db):
 
     stand_comand={'comand': 5000,
@@ -100,7 +96,7 @@ def create_company(name_db):
             my_db.add_row(name_table, tuple(title), tuple(value))
     return 'ok'
 
-@app.route('/futniture_/add_personal', methods=['POST'])
+@app.route('/furniture_/add_personal', methods=['POST'])
 def add_personal(name_db):
 
     stand_comand={'comand': 2000,
@@ -120,10 +116,9 @@ def add_personal(name_db):
             title = list(row.keys())
             value = [row[i] for i in title]
             my_db.add_row(name_table, tuple(title), tuple(value))
-
     return 'ok'
 
-@app.route('/futniture/add_db', methods=['POST'])
+@app.route('/furniture/add_db', methods=['POST'])
 def add_factory(comand=1111):
 
     stand_comand={'comand': comand,
@@ -141,6 +136,42 @@ def add_factory(comand=1111):
     database.create_tables_factory(j['name_db'], path_cr_tb)
 
     return "ok"
+
+@app.route('/furniture/get_inside_struct_<name_db>/', methods=['POST'])
+def get_inside_struct(name_db):
+    table_list={"tables": {"conf_criterion":[],
+                                    "department":   [],
+                                    "bonus_koeficient":[],
+                                    "posts":[]
+                                    }}
+    temp_data={}
+    stand_comand = {'comand': 1100,
+                    'user': 'admin',
+                    'db_comand': 1,
+                    }
+    my_db = FurnitureDtabase(name_db=name_db)
+    a=request.data
+    j = json.loads(a.decode('utf-8'))
+    check_error = check_headline(j, stand_comand)
+    if check_error != True:
+        return check_error
+
+    for name_table in table_list["tables"]:
+        data_table = my_db.get_data_all(name_table)
+        column_table = my_db.get_name_column(name_table)
+        for h in data_table:
+            for i in range(len(h)):
+                if type(h[i]) != str:
+                    temp_data[column_table[i][0]] = str(h[i])
+                else:
+                    temp_data[column_table[i][0]] = str(h[i])
+            table_list["tables"][name_table].append(temp_data.copy())
+        temp_data.clear()
+    print("json")
+    json_send = json.dumps(table_list)
+
+    return json_send
+
 # list_tables = db.get_tables()
 # stand_comand={ 'comand': 1000,
 #                 'user': 'admin',
@@ -185,5 +216,5 @@ def add_factory(comand=1111):
 #             return f'department named {check_value[:-1]} already exists'
 """***********************************************"""
 if __name__ == '__main__':
-    app.debug=True
+#    app.debug=True
     app.run( port=5000)
