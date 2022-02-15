@@ -1,3 +1,4 @@
+import decimal
 import json
 
 from flask import Flask, request
@@ -57,7 +58,6 @@ def check_type(data, name_table, type_columns):
                 print(f'ERROR WRITE:type the data types of the row "{name_column}" to the table "{name_table}" '
                       f'do not match with the database')
                 return check_flag
-
     return check_flag
 
 def check_table(data, list_tables):
@@ -161,16 +161,46 @@ def get_inside_struct(name_db):
         column_table = my_db.get_name_column(name_table)
         for h in data_table:
             for i in range(len(h)):
-                if type(h[i]) != str:
-                    temp_data[column_table[i][0]] = str(h[i])
+                # if type(h[i]) != str:
+                #     temp_data[column_table[i][0]] = str(h[i])
+                # else:
+                #     temp_data[column_table[i][0]] = str(h[i])
+                if type(h[i])==decimal.Decimal:
+                    temp_data[column_table[i][0]] = float(h[i])
                 else:
-                    temp_data[column_table[i][0]] = str(h[i])
+                    temp_data[column_table[i][0]] = h[i]
             table_list["tables"][name_table].append(temp_data.copy())
         temp_data.clear()
     print("json")
     json_send = json.dumps(table_list)
 
     return json_send
+
+@app.route('/furniture/edit_tables_<name_db>/', methods=['POST'])
+def get_edit_tables(name_db):
+
+    stand_comand = {'comand': 1110,
+                    'user': 'admin',
+                    'db_comand': 1,
+                    }
+    my_db = FurnitureDtabase(name_db=name_db)
+    a = request.data
+    j = json.loads(a.decode('utf-8'))
+    check_error = full_check(json_data=j, stand_comand=stand_comand, name_db=name_db)
+    if check_error != 'ok':
+        return check_error
+    list_tables = j['tables']
+    for name_table in list_tables:
+        list_rows = list_tables[name_table]
+        for row in list_rows:
+            title = list(row.keys())
+            value = [row[i] for i in title]
+            my_db.edit_row(name_table, tuple(title), tuple(value))
+    return "ok"
+
+
+
+
 
 # list_tables = db.get_tables()
 # stand_comand={ 'comand': 1000,
