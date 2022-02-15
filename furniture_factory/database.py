@@ -75,6 +75,7 @@ class FurnitureDtabase:
                 #     d=tuple(data[:][i])
                 mycursor.execute(mysql_comand, data)
                 connection.commit()
+
     def get_type(self, name_table, orig_t=1):
         with mysql.connector.connect(
                 host=self.host,
@@ -175,7 +176,6 @@ class FurnitureDtabase:
 
     def count_row(self, name_table):
         """
-
         :param name_table str:
         :return count row:
         Comand MySQL:SELECT COUNT(1) FROM name_table
@@ -192,7 +192,6 @@ class FurnitureDtabase:
             mysql_comand = 'SELECT COUNT(1) FROM '+name_table
             mycursor.execute(mysql_comand)
             count = mycursor.fetchall()
-
         return count
     def clear_table(self, name_table):
         """
@@ -218,6 +217,54 @@ class FurnitureDtabase:
             connection.commit()
 
         return None
+
+    def get_data_all(self, name_table):
+        with mysql.connector.connect(
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                port=self.port,
+                database=self.database
+
+        ) as connection:
+            mycursor = connection.cursor()
+            mysql_comand= f'SELECT * from {name_table}'
+            mycursor.execute(mysql_comand)
+            data=mycursor.fetchall()
+
+        return data
+    def get_name_column(self, name_table):
+        with mysql.connector.connect(
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                port=self.port,
+                database=self.database
+
+        ) as connection:
+            mycursor = connection.cursor()
+            mysql_comand= f'SHOW COLUMNS from {name_table}'
+            mycursor.execute(mysql_comand)
+            name_column=mycursor.fetchall()
+
+        return name_column
+    def edit_row(self, name_table, title: tuple, value : tuple):
+        with mysql.connector.connect(
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                port=self.port,
+                database=self.database
+
+        ) as connection:
+            mycursor = connection.cursor()
+            for n in range(1,len(title)):
+                if type(value[n])==str:
+                    mysql_comand=f"UPDATE {name_table} SET {title[n]} = '{value[n]}' WHERE {title[0]} = {value[0]}"
+                else:
+                    mysql_comand = f"UPDATE {name_table} SET {title[n]} = {value[n]} WHERE {title[0]} = {value[0]}"
+                mycursor.execute(mysql_comand)
+                connection.commit()
 
 
 
