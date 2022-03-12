@@ -3,6 +3,8 @@ from PyQt5 import QtWidgets, QtCore
 from my_project.furniture_factory.sandbox_code.demo_pb_in_mw import Table_start_, Worker_2, PopUpProgressB
 from functools import partial
 import time
+from my_project.furniture_factory.client_app import ServerConnector
+import json
 import traceback
 from PyQt5.QtCore import QThread,pyqtSignal, QObject, pyqtSlot,QRunnable, QThreadPool,QRegExp
 
@@ -25,13 +27,13 @@ def start_process(progress_bar, self=None):
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     resized = QtCore.pyqtSignal()
     def __init__(self, parent=None):
-        _translate = QtCore.QCoreApplication.translate
+        self._translate = QtCore.QCoreApplication.translate
         super(MainWindow, self).__init__(parent=parent)
         self.setupUi(self)
         self.resized.connect(self.someFunction)
         self.center = int(1011 / 2)
         self.struct=Table_start_()
-        self.struct.ButtonNext.setText(_translate("Form", "ОБНОВИТЬ"))
+        self.struct.ButtonNext.setText(self._translate("Form", "ОБНОВИТЬ"))
         self.stackedWidget.addWidget(self.struct)
         self.TB_structure.clicked.connect(self.inside_structure)
         self.TB_search_personal.clicked.connect(self.personal)
@@ -49,9 +51,29 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.move_ = int(self.w / 2 - self.x_start)
             self.groupBox.setGeometry(QtCore.QRect(self.move_-self.center, 30, 1011, 741))
 
-    def load_data(self):
+    def load_struct(self):
+        row=0
+        column=0
+        name_db='novaja_mebel'
+        dir_table_name={"conf_criterion":self.struct.table_conf_criterion,
+                        "department":self.struct.table_department,
+                        "posts":self.struct.table_posts,
+                        "bonus_koeficient":self.struct.table_bonus_koeficient}
 
-        pass
+        server = ServerConnector("admin", "127.0.0.1", 5000)
+        server.name_db = name_db
+        get_json = server.get_struct(name_db=name_db).content
+        get_json = json.loads(get_json.decode('utf-8'))
+        for table_server in get_json["tables"]:
+            table_vision=dir_table_name[table_server]
+            table_vision.setRowCount(len(get_json["tables"][table_server]))
+            for row_s in get_json["tables"][table_server]:
+                for key_row_s in row_s.keys():
+                    item = table_vision.item(row, column)
+                    item.setText(self._translate("Form", row_s[key_row_s]))
+                    column+=1
+            row+=1
+
 
     def cont_test(self):
         a = 0
