@@ -25,7 +25,6 @@ def start_process(progress_bar, self=None):
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     resized = QtCore.pyqtSignal()
     def __init__(self, parent=None):
-        print("start")
         _translate = QtCore.QCoreApplication.translate
         super(MainWindow, self).__init__(parent=parent)
         self.setupUi(self)
