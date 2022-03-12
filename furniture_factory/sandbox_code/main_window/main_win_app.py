@@ -11,7 +11,6 @@ from PyQt5.QtCore import QThread,pyqtSignal, QObject, pyqtSlot,QRunnable, QThrea
 def start_process(progress_bar, self=None):
     thread_funct=Worker_2(self.cont_test)
     thread_funct.signals.finished.connect(self.finish)
-
     thred_progress_bar = Worker_2(partial(progress_bar.proc_counter, status='on'))  # Any other args, kwargs are passed to the run function
     thred_progress_bar.kwargs['progress_callback'] = thred_progress_bar.signals.progress
     thred_progress_bar.signals.result.connect(progress_bar.print_output)
@@ -26,6 +25,7 @@ def start_process(progress_bar, self=None):
 class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     resized = QtCore.pyqtSignal()
     def __init__(self, parent=None):
+        print("start")
         _translate = QtCore.QCoreApplication.translate
         super(MainWindow, self).__init__(parent=parent)
         self.setupUi(self)
