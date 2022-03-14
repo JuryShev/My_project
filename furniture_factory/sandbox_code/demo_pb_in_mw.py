@@ -5,6 +5,7 @@ from my_project.furniture_factory.start_window import Ui_MainWindow
 from my_project.furniture_factory.win_dialog_new_fuctory import Ui_Dialog as creat_dialog
 from my_project.furniture_factory.CountCriterion_w import CountCr_2, CountCr
 from my_project.furniture_factory.Table_start import Table_start
+from my_project.furniture_factory.Table_start_v2 import Table_start_v2
 from my_project.furniture_factory.progress_bar import PB_Dialog as PB
 from PyQt5.QtWidgets import QWidget, QPushButton, QProgressBar, QVBoxLayout, QApplication,\
     QMessageBox,QGraphicsDropShadowEffect,QStyledItemDelegate,QLineEdit
@@ -184,6 +185,7 @@ class PopUpProgressB(QWidget):
 
     def proc_counter(self, progress_callback, status='on'):  # A slot takes no params
         direct=0
+        print("start_PB")
         while self.status_==status:
             for i in range(1, 98):
                 time.sleep(0.01/(i*i))
@@ -226,8 +228,8 @@ class CountCriterion(QWidget, CountCr):
             stack_window_Height = table_start_.w_height
             stack_window_Width = table_start_.w_width
             table_start_.label_name_factory.setText(_translate("Form", start_w.name_factory_orig))
-            table_start_.tableWidget.setRowCount(table_start_.value_criterion)
-            table_start_.tableWidget_2.setRowCount(table_start_.value_department)
+            table_start_.table_conf_criterion.setRowCount(table_start_.value_criterion)
+            table_start_.table_department.setRowCount(table_start_.value_department)
             stack_window.setFixedHeight(stack_window_Height)
             stack_window.setFixedWidth(stack_window_Width)
             stack_window.setCurrentIndex(stack_window.currentIndex() + 1)
@@ -272,7 +274,7 @@ class DialogCreatFactory(QDialog, creat_dialog):
         print('reject')
         self.close()
 
-class Table_start_(QWidget, Table_start):
+class Table_start_(QWidget, Table_start_v2):
     signal_send_data = pyqtSignal(object)
     signal_receive_data = pyqtSignal(object)
 
@@ -280,15 +282,15 @@ class Table_start_(QWidget, Table_start):
         super( ).__init__()
         self.threadpool = QThreadPool()
         self.setupUi(self)
-        self.w_width=1045
-        self.w_height = 545
-        self.value_criterion=0
-        self.value_department = 0
+        self.w_width=1318
+        self.w_height = 752
         self.progress_bar = PopUpProgressB()
-        self.pushButton_3.clicked.connect(self.add_row_criterion)
-        self.pushButton_2.clicked.connect(self.drop_row_criterion)
-        self.pushButton_4.clicked.connect(self.add_row_department)
-        self.pushButton_5.clicked.connect(self.drop_row_department)
+        self.add_conf_criterion.clicked.connect(self.add_row_criterion)
+        self.remove_conf_criterion.clicked.connect(self.drop_row_criterion)
+        self.add_department.clicked.connect(self.add_row_department)
+        self.remove_department.clicked.connect(self.drop_row_department)
+        self.add_post.clicked.connect(self.add_row_post)
+        self.remove_post.clicked.connect(self.drop_row_post)
         self.ButtonNext.clicked.connect(self.next)
         self.data_send={
                         "comand": 5000,
@@ -296,13 +298,15 @@ class Table_start_(QWidget, Table_start):
                         "db_comand": 1,
                         "tables": {"conf_criterion":[],
                                     "department":   [],
-                                    "bonus_koeficient":[]
+                                    "bonus_koeficient":[],
+                                    "posts":[]
                                     }}
         self.conf_criterion={"title_criterion":"Порядок_1",
                                         "max_coef": 5,
                                         "w_coef":5.0}
         self.department={"title": "Отдел_1"}
         self.bonus_koeficient={"percentage_of_profits":2.0}
+        self.posts={"label_post": "Инженер"}
         self.flag_send_data=0
         self.flag_receive_data=0
         self.signal_send_data.connect(self.start_send_data)
@@ -332,37 +336,42 @@ class Table_start_(QWidget, Table_start):
         self.flag_receive_data.emit(value)
 
     def add_row_criterion(self):
-        self.value_criterion=self.value_criterion+1
-        self.tableWidget.setRowCount(self.value_criterion)
+        self.table_conf_criterion.setRowCount(self.table_conf_criterion.rowCount()+1)
 
     def drop_row_criterion(self):
-        self.value_criterion=self.value_criterion-1
-        self.tableWidget.setRowCount(self.value_criterion)
+        self.table_conf_criterion.setRowCount(self.table_conf_criterion.rowCount()-1)
 
     def add_row_department(self):
-
-        self.value_department=self.value_department+1
-        self.tableWidget_2.setRowCount(self.value_department)
+        self.table_department.setRowCount(self.table_department.rowCount()+1)
 
     def drop_row_department(self):
-        self.value_department=self.value_department-1
-        self.tableWidget_2.setRowCount(self.value_department)
+        self.table_department.setRowCount(self.table_department.rowCount()-1)
+
+    def add_row_post(self):
+        self.table_posts.setRowCount(self.table_posts.rowCount()+1)
+
+    def drop_row_post(self):
+        self.table_posts.setRowCount(self.table_posts.rowCount()-1)
+
+
 
     def next(self):
         check_massage={'conf_criterion':'',
                        'department': '',
-                       'bonus_koeficient':''
+                       'bonus_koeficient':'',
+                       'posts':''
                        # 'W_coef':'',
                        # 'percentage_of_profits':'',
                        # 'conf_criterion_duplicate_name':'',
                        #  'department_duplicate_name':'',
                        }
-        print("1,0: %s" % self.tableWidget.item(0, 1).text())
-        print(self.tableWidget.rowCount())
+        print("1,0: %s" % self.table_conf_criterion.item(0, 1).text())
+        print(self.table_conf_criterion.rowCount())
         check_massage_v = ''
-        check_massage['conf_criterion']=self.chec_type(self.tableWidget, self.conf_criterion)
-        check_massage['department'] = self.chec_type(self.tableWidget_2, self.department)
-        check_massage['bonus_koeficient'] = self.chec_type(self.tableWidget_3, self.bonus_koeficient)
+        check_massage['conf_criterion']=self.chec_type(self.table_conf_criterion, self.conf_criterion)
+        check_massage['department'] = self.chec_type(self.table_department, self.department)
+        check_massage['bonus_koeficient'] = self.chec_type(self.table_bonus_koeficient, self.bonus_koeficient)
+        check_massage['posts'] = self.chec_type(self.table_posts, self.posts)
 
         for check_massage_k in check_massage:
             check_massage_v=check_massage[check_massage_k]
@@ -373,10 +382,11 @@ class Table_start_(QWidget, Table_start):
             self.label_error.setText(_translate("Form", check_massage_v))
             return None
 
-        check_massage['W_coef']=self.check_procent(self.tableWidget,2)
-        check_massage['percentage_of_profits'] = self.check_procent(self.tableWidget_3, 0)
-        check_massage['conf_criterion_duplicate_name']=self.check_duplicate(self.tableWidget, self.conf_criterion)
-        check_massage['department_duplicate_name'] = self.check_duplicate(self.tableWidget_2, self.department)
+        check_massage['W_coef']=self.check_procent(self.table_conf_criterion, 2)
+        check_massage['percentage_of_profits'] = self.check_procent(self.table_bonus_koeficient, 0)
+        check_massage['conf_criterion_duplicate_name']=self.check_duplicate(self.table_conf_criterion, self.conf_criterion)
+        check_massage['department_duplicate_name'] = self.check_duplicate(self.table_department, self.department)
+        check_massage['posts'] = self.check_duplicate(self.table_posts, self.posts)
 
         for check_massage_k in check_massage:
             check_massage_v=check_massage[check_massage_k]
@@ -388,9 +398,10 @@ class Table_start_(QWidget, Table_start):
         else:
             self.label_error.setText(_translate("Form", ''))
             print(check_massage_v)
-            self.write_in_data(self.tableWidget, self.conf_criterion, 'conf_criterion')
-            self.write_in_data(self.tableWidget_2, self.department, 'department')
-            self.write_in_data(self.tableWidget_3, self.bonus_koeficient, 'bonus_koeficient')
+            self.write_in_data(self.table_conf_criterion, self.conf_criterion, 'conf_criterion')
+            self.write_in_data(self.table_department, self.department, 'department')
+            self.write_in_data(self.table_bonus_koeficient, self.bonus_koeficient, 'bonus_koeficient')
+            self.write_in_data(self.table_posts, self.posts, 'posts')
             self.check_send_data=1
 
     def chec_type(self, tablewidget, dir_data):
@@ -495,6 +506,7 @@ class Table_start_(QWidget, Table_start):
 
     def cont_test(self):
         a = 0
+        self.progress_bar.status_ = 'on'
         for i in range(5):
             time.sleep(0.5)
             print(i)
@@ -514,11 +526,6 @@ class Table_start_(QWidget, Table_start):
         else :
             self.label_error.setText(_translate("Form", self.progress_bar.status_))
             print(self.progress_bar.status_)
-
-
-
-
-
 
 class mywindow(QtWidgets.QMainWindow):
 
