@@ -11,7 +11,7 @@ from PyQt5.QtCore import QThread,pyqtSignal, QObject, pyqtSlot,QRunnable, QThrea
 
 
 def start_process(progress_bar, self=None):
-    thread_funct=Worker_2(self.cont_test)
+    thread_funct=Worker_2(self.load_struct)
     thread_funct.signals.finished.connect(self.finish)
     thred_progress_bar = Worker_2(partial(progress_bar.proc_counter, status='on'))  # Any other args, kwargs are passed to the run function
     thred_progress_bar.kwargs['progress_callback'] = thred_progress_bar.signals.progress
@@ -54,6 +54,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def load_struct(self):
         row=0
         column=0
+        print("load_struct")
         name_db='novaja_mebel'
         dir_table_name={"conf_criterion":self.struct.table_conf_criterion,
                         "department":self.struct.table_department,
@@ -62,17 +63,27 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
         server = ServerConnector("admin", "127.0.0.1", 5000)
         server.name_db = name_db
-        get_json = server.get_struct(name_db=name_db).content
-        get_json = json.loads(get_json.decode('utf-8'))
-        for table_server in get_json["tables"]:
-            table_vision=dir_table_name[table_server]
-            table_vision.setRowCount(len(get_json["tables"][table_server]))
-            for row_s in get_json["tables"][table_server]:
-                for key_row_s in row_s.keys():
-                    item = table_vision.item(row, column)
-                    item.setText(self._translate("Form", row_s[key_row_s]))
-                    column+=1
-            row+=1
+        try:
+            get_json = server.get_struct(name_db=name_db).content
+            get_json = json.loads(get_json.decode('utf-8'))
+            for table_server in get_json["tables"]:
+                row=0
+                table_vision=dir_table_name[table_server]
+                table_vision.setRowCount(len(get_json["tables"][table_server]))
+                for row_s in get_json["tables"][table_server]:
+                    keys_row_s = list(row_s.keys())
+                    column=0
+                    for key_row_s in keys_row_s[1:]:
+                            if type(row_s[key_row_s])==str:
+                                table_vision.setItem(row, column, QtWidgets.QTableWidgetItem(row_s[key_row_s]))
+                            elif type(row_s[key_row_s])!=str :
+                                table_vision.setItem(row, column, QtWidgets.QTableWidgetItem(str(row_s[key_row_s])))
+                            column+=1
+                    row+=1
+        except:
+            self.struct.label_error.setText(self._translate("Form", "Ошибка подключения к серверу"))
+        finally:
+             self.progress_bar.status_ = 'ok'
 
 
     def cont_test(self):
@@ -106,10 +117,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def inside_structure(self):
         self.stackedWidget.setCurrentIndex(3)
+        #self.load_struct()
         if self.flag_one_load_struct==0:
             start_process(self.progress_bar, self=self)
             self.progress_bar.status_ = 'on'
             self.flag_one_load_struct=1
+
         # self.load_data()
 
 
