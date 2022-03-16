@@ -566,6 +566,36 @@ class Table_start_(QWidget, Table_start_v2):
                     self.data_load = json.loads(self.data_load.decode('utf-8'))
             ######################################################################
 
+            ###############add row #####################################################
+            if answer_server == 'ok' or answer_server == 'none_operation':
+                save_count_add_row = {}
+                for table in self.data_load["tables"]:
+                    value_add_list = []
+                    value_list_copy = self.data_edit["tables"][table]
+                    value_list = self.data_load["tables"][table]
+                    count_add_row = len(value_list) - len(value_list_copy)
+                    save_count_add_row[table] = abs(count_add_row)
+                    if count_add_row < 0:
+                        value_list_copy = self.data_edit["tables"][table][-abs(count_add_row):]
+                        self.data_send["tables"][table] = value_list_copy
+                if len(self.data_send["tables"]) > 0:
+                    answer_server = client.add_row_table(data_send=self.data_send).content.decode("utf-8")
+                    self.data_send["tables"].clear()
+                    print(answer_server)
+                    if answer_server == 'ok':
+                        self.data_load = client.get_struct().content  # загрузка обновленых таблиц
+                        self.data_load = json.loads(self.data_load.decode('utf-8'))
+                        for table in self.data_load["tables"]:
+                            value_list = self.data_load["tables"][table]
+                            value_list_copy = self.data_edit["tables"][table].copy()
+                            count_add_row = save_count_add_row[table]
+                            if count_add_row > 0:
+                                value_list_copy[-count_add_row:] = value_list[-count_add_row:]
+                                self.data_edit["tables"][table].clear()
+                                self.data_edit["tables"][table] = value_list_copy
+
+            #############################################################
+
             pass
 
     def thread_complete(self):
