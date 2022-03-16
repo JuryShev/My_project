@@ -292,6 +292,13 @@ class Table_start_(QWidget, Table_start_v2):
         self.add_post.clicked.connect(self.add_row_post)
         self.remove_post.clicked.connect(self.drop_row_post)
         self.ButtonNext.clicked.connect(self.next)
+        self.data_load= {"tables": {}}
+        self.data_edit={
+                        "tables": {"conf_criterion":[],
+                                    "department":   [],
+                                    "bonus_koeficient":[],
+                                    "posts":[]
+                                    }}
         self.data_send={
                         "comand": 5000,
                         "user": "admin",
@@ -308,6 +315,7 @@ class Table_start_(QWidget, Table_start_v2):
         self.bonus_koeficient={"percentage_of_profits":2.0}
         self.posts={"label_post": "Инженер"}
         self.flag_send_data=0
+        self.flag_edit_mode=0
         self.flag_receive_data=0
         self.signal_send_data.connect(self.start_send_data)
         self.signal_receive_data.connect(self.start_work_window)
@@ -353,56 +361,69 @@ class Table_start_(QWidget, Table_start_v2):
     def drop_row_post(self):
         self.table_posts.setRowCount(self.table_posts.rowCount()-1)
 
-
-
-    def next(self):
-        check_massage={'conf_criterion':'',
-                       'department': '',
-                       'bonus_koeficient':'',
-                       'posts':''
-                       # 'W_coef':'',
-                       # 'percentage_of_profits':'',
-                       # 'conf_criterion_duplicate_name':'',
-                       #  'department_duplicate_name':'',
-                       }
+    def all_check(self):
+        check_massage = {'conf_criterion': '',
+                         'department': '',
+                         'bonus_koeficient': '',
+                         'posts': ''
+                         }
         print("1,0: %s" % self.table_conf_criterion.item(0, 1).text())
         print(self.table_conf_criterion.rowCount())
         check_massage_v = ''
-        check_massage['conf_criterion']=self.chec_type(self.table_conf_criterion, self.conf_criterion)
+        check_massage['conf_criterion'] = self.chec_type(self.table_conf_criterion, self.conf_criterion)
         check_massage['department'] = self.chec_type(self.table_department, self.department)
         check_massage['bonus_koeficient'] = self.chec_type(self.table_bonus_koeficient, self.bonus_koeficient)
         check_massage['posts'] = self.chec_type(self.table_posts, self.posts)
 
         for check_massage_k in check_massage:
-            check_massage_v=check_massage[check_massage_k]
-            if check_massage_v!='ok':
+            check_massage_v = check_massage[check_massage_k]
+            if check_massage_v != 'ok':
                 break
 
-        if check_massage_v!='ok':
-            self.label_error.setText(_translate("Form", check_massage_v))
-            return None
+        if check_massage_v != 'ok':
+            # self.label_error.setText(_translate("Form", check_massage_v))
+            return check_massage_v
 
-        check_massage['W_coef']=self.check_procent(self.table_conf_criterion, 2)
+        check_massage['W_coef'] = self.check_procent(self.table_conf_criterion, 2)
         check_massage['percentage_of_profits'] = self.check_procent(self.table_bonus_koeficient, 0)
-        check_massage['conf_criterion_duplicate_name']=self.check_duplicate(self.table_conf_criterion, self.conf_criterion)
+        check_massage['conf_criterion_duplicate_name'] = self.check_duplicate(self.table_conf_criterion,
+                                                                                    self.conf_criterion)
         check_massage['department_duplicate_name'] = self.check_duplicate(self.table_department, self.department)
         check_massage['posts'] = self.check_duplicate(self.table_posts, self.posts)
 
         for check_massage_k in check_massage:
-            check_massage_v=check_massage[check_massage_k]
-            if check_massage_v!='ok':
+            check_massage_v = check_massage[check_massage_k]
+            if check_massage_v != 'ok':
                 break
+        return check_massage_v
 
+    def build_data_in_json(self, json_templ):
+        self.write_in_data(self.table_conf_criterion, self.conf_criterion, json_templ, 'conf_criterion')
+        self.write_in_data(self.table_department, self.department, json_templ, 'department')
+        self.write_in_data(self.table_bonus_koeficient, self.bonus_koeficient, json_templ, 'bonus_koeficient')
+        self.write_in_data(self.table_posts, self.posts, json_templ,'posts')
+
+
+    def next(self):
+
+        check_massage_v=self.all_check()
         if check_massage_v!='ok':
             self.label_error.setText(_translate("Form", check_massage_v))
         else:
             self.label_error.setText(_translate("Form", ''))
             print(check_massage_v)
-            self.write_in_data(self.table_conf_criterion, self.conf_criterion, 'conf_criterion')
-            self.write_in_data(self.table_department, self.department, 'department')
-            self.write_in_data(self.table_bonus_koeficient, self.bonus_koeficient, 'bonus_koeficient')
-            self.write_in_data(self.table_posts, self.posts, 'posts')
-            self.check_send_data=1
+            self.build_data_in_json(self.data_send)
+            self.check_send_data = 1
+
+    def refresh(self):
+        check_massage_v = self.all_check()
+        if check_massage_v != 'ok':
+            self.label_error.setText(_translate("Form", check_massage_v))
+        else:
+            self.label_error.setText(_translate("Form", ''))
+            print(check_massage_v)
+            self.build_data_in_json(self.data_edit)
+            self.check_send_data=2
 
     def chec_type(self, tablewidget, dir_data):
         list_key = list(dir_data.keys())
@@ -461,7 +482,7 @@ class Table_start_(QWidget, Table_start_v2):
             return f"В столбце '{name_column_err}' {str_check_procent}"
         return  'ok'
 
-    def write_in_data(self, tablewidget, dir_data, name_table):
+    def write_in_data(self, tablewidget, dir_data, json_templ, name_table):
 
         list_key=list(dir_data.keys())
         if len(list_key)!=tablewidget.columnCount():
@@ -474,7 +495,7 @@ class Table_start_(QWidget, Table_start_v2):
                     value=type_value(value)
                 dir_data[list_key[column]]=value
 
-            self.data_send["tables"][name_table].append(dir_data.copy())
+            json_templ["tables"][name_table].append(dir_data.copy())
 
     def contextMenuEvent(self, event):
         context_menu=QtWidgets.QMenu(self)
@@ -515,8 +536,37 @@ class Table_start_(QWidget, Table_start_v2):
 
     def send_data(self):
         self.progress_bar.status_ = 'on'
-        result=client.add_criterion(name_db=start_w._name_factory, data_send=self.data_send).content.decode("utf-8")
-        self.progress_bar.status_ = result
+        if self.check_send_data==1:
+            result=client.add_criterion(data_send=self.data_send).content.decode("utf-8")
+            self.progress_bar.status_ = result
+        elif self.check_send_data==2:
+            #### del row ##########################################
+            # добавили count_del_row строк в конец таблицы
+            # отправляем индекс строки на удаления
+            # вызвать функцию удаления строк
+            for table in self.data_load["tables"]:
+                id_dict = {}
+                id_list = []
+                value_list_copy = self.data_edit["tables"][table]
+                value_list = self.data_load["tables"][table]
+                count_del_row = len(value_list) - len(value_list_copy)
+                if count_del_row > 0:
+                    value_list = self.data_load["tables"][table][-count_del_row:]
+                    id_key = list(value_list[0].keys())[0]
+                    for value_dict in value_list:
+                        id_dict[id_key] = value_dict[id_key]
+                        id_list.append(id_dict.copy())
+                    self.data_send["tables"][table] = id_list
+            if len(self.data_send["tables"]) > 0:
+                answer_server = client.del_row_table(data_send=self.data_send).content.decode("utf-8")
+                self.data_send["tables"].clear()
+                print(answer_server)
+                if answer_server == 'ok':
+                    self.data_load = client.get_struct().content  # загрузка обновленых таблиц
+                    self.data_load = json.loads(self.data_load.decode('utf-8'))
+            ######################################################################
+
+            pass
 
     def thread_complete(self):
 
@@ -608,6 +658,7 @@ class mywindow(QtWidgets.QMainWindow):
         stack_window_Height = count_crit.w_height
         stack_window_Width = count_crit.w_width
         count_crit.label_name_factory.setText(_translate("Form", self.name_factory_orig))
+        client.name_db=self.name_factory_orig
         stack_window.setFixedHeight(stack_window_Height)
         stack_window.setFixedWidth(stack_window_Width)
         stack_window.setCurrentIndex(stack_window.currentIndex()+1)
@@ -621,7 +672,7 @@ class mywindow(QtWidgets.QMainWindow):
         return a
 
     def start_creat_factory(self):
-        result = client.add_db(name_db=self._name_factory, comand=1111, db_comand=1).content.decode("utf-8")
+        result = client.add_db(comand=1111, db_comand=1).content.decode("utf-8")
         self.progress_bar.status_ = result
 
     def thread_complete(self):
