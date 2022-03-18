@@ -32,8 +32,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.setupUi(self)
         self.resized.connect(self.someFunction)
         self.center = int(1011 / 2)
+        self.center_struct=int(1390/2)
+        self.x_start_struct=60
         self.struct=Table_start_()
         self.struct.ButtonNext.setText(self._translate("Form", "ОБНОВИТЬ"))
+        #####################################################################
+        # self.lay_load_struct = QtWidgets.QWidget()
+        # self.lay_load_struct.setObjectName("load_struct")
+        # self.frame = QtWidgets.QFrame(self.lay_load_struct)
+        # self.frame.setGeometry(QtCore.QRect(30, 40, 1331, 711))
+        # self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
+        # self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
+        # self.frame.setObjectName("frame")
+        # self.struct.setupUi(self.frame)
+        # self.struct.label_error.setText(self._translate("Form", "Ошибка"))
+        #####################################################################
         self.stackedWidget.addWidget(self.struct)
         self.TB_structure.clicked.connect(self.inside_structure)
         self.TB_search_personal.clicked.connect(self.personal)
@@ -49,12 +62,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
             self.w = self.width()
             self.h = self.height()
             self.move_ = int(self.w / 2 - self.x_start)
+            self.move_struct = int(self.w / 2 - self.x_start_struct)
             self.groupBox.setGeometry(QtCore.QRect(self.move_-self.center, 30, 1011, 741))
+            self.struct.main_frame.setGeometry(QtCore.QRect(self.move_struct-self.center_struct, 30, 1311, 741))
 
     def load_struct(self):
         row=0
         column=0
-        print("load_struct")
+        print("load_struct  ")
         name_db='novaja_mebel'
         dir_table_name={"conf_criterion":self.struct.table_conf_criterion,
                         "department":self.struct.table_department,
@@ -64,9 +79,11 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         server = ServerConnector("admin", "127.0.0.1", 5000)
         server.name_db = name_db
         try:
-            get_json = server.get_struct(name_db=name_db).content
+
+            get_json = server.get_struct().content
             get_json = json.loads(get_json.decode('utf-8'))
             for table_server in get_json["tables"]:
+
                 row=0
                 table_vision=dir_table_name[table_server]
                 table_vision.setRowCount(len(get_json["tables"][table_server]))
@@ -81,6 +98,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
                             column+=1
                     row+=1
         except:
+            print("load_struct  2")
             self.struct.label_error.setText(self._translate("Form", "Ошибка подключения к серверу"))
         finally:
              self.progress_bar.status_ = 'ok'
