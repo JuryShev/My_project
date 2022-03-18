@@ -15,7 +15,7 @@ class Table_start_v2(object):
     def setupUi(self, Form):
         Form.setObjectName("Form")
         Form.setEnabled(True)
-        Form.resize(1318, 752)
+        Form.resize(1311, 752)
         Form.setWindowOpacity(2.0)
         Form.setStyleSheet("background-color: rgb(74, 80, 106);")
         self.main_frame = QtWidgets.QFrame(Form)
@@ -121,6 +121,9 @@ class Table_start_v2(object):
         self.remove_conf_criterion.setFont(font)
         self.remove_conf_criterion.setStyleSheet("color: rgb(255, 255, 255);")
         self.remove_conf_criterion.setObjectName("pushButton_2")
+
+
+
         self.frame_2 = QtWidgets.QFrame(self.main_frame)
         self.frame_2.setGeometry(QtCore.QRect(754, 200, 105, 391))
         self.frame_2.setStyleSheet("background-color: rgb(138, 149, 197);")
@@ -289,6 +292,20 @@ class Table_start_v2(object):
         self.remove_post.setFont(font)
         self.remove_post.setStyleSheet("color: rgb(255, 255, 255);")
         self.remove_post.setObjectName("pushButton_7")
+
+        self.refreshButton = QtWidgets.QToolButton(self.main_frame)
+        self.refreshButton.setGeometry(QtCore.QRect(1264, 598, 41, 31))
+        self.refreshButton.setStyleSheet("border:none\n"
+                                         "")
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(
+            "C:\\Users\\Yura\\PycharmProjects\\pythonProject\\my_project\\furniture_factory\\GUI_designer\\icon/1800 Icon Pack [20x20]/PNG@2_green_icons/arrow_repeat [#236].png"),
+                       QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.refreshButton.setIcon(icon)
+        self.refreshButton.setIconSize(QtCore.QSize(24, 24))
+        self.refreshButton.setShortcut("")
+        self.refreshButton.setObjectName("toolButton")
+
         self.label_posts = QtWidgets.QLabel(self.main_frame)
         self.label_posts.setGeometry(QtCore.QRect(860, 171, 161, 16))
         font = QtGui.QFont()
@@ -355,6 +372,7 @@ class Table_start_v2(object):
         self.add_post.setText(_translate("Form", "Добавить"))
         self.remove_post.setText(_translate("Form", "Удалить"))
         self.label_posts.setText(_translate("Form", "таблица должностей"))
+        self.refreshButton.setText(_translate("Form", "..."))
 
 
 if __name__ == "__main__":
