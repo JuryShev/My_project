@@ -540,6 +540,7 @@ class Table_start_(QWidget, Table_start_v2):
             result=client.add_criterion(data_send=self.data_send).content.decode("utf-8")
             self.progress_bar.status_ = result
         elif self.check_send_data==2:
+            answer_server = 'none_operation'
             #### del row ##########################################
             # добавили count_del_row строк в конец таблицы
             # отправляем индекс строки на удаления
@@ -595,7 +596,29 @@ class Table_start_(QWidget, Table_start_v2):
                                 self.data_edit["tables"][table] = value_list_copy
 
             #############################################################
+            ###############edit row#####################################################
+            if answer_server == 'ok' or answer_server == 'none_operation':
+                for table in self.data_load["tables"]:
+                    value_edit_list = []
+                    value_list_copy = self.data_edit["tables"][table]
+                    value_list = self.data_load["tables"][table]
 
+                    for v in range(len(value_list)):
+                        v_keys = list(value_list[v].keys())
+                        equal = value_list[v] == value_list_copy[v]  # проверка на редактирование
+                        value_edit_dict = {}
+                        if equal == False:
+                            value_edit_dict[v_keys[0]] = value_list[v][v_keys[0]]
+                            for v_key in v_keys:
+                                v_orig = value_list[v][v_key]
+                                v_copy = value_list_copy[v][v_key]
+                                if v_orig != v_copy:
+                                    value_edit_dict[v_key] = v_copy
+                        if len(value_edit_dict.keys()) > 0:
+                            value_edit_list.append(value_edit_dict)
+                    if len(value_edit_list) > 0:
+                        self.data_send["tables"][table] = value_edit_list
+                client.edit_table(data_send=self.data_send)
             pass
 
     def thread_complete(self):
