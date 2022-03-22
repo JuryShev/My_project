@@ -35,12 +35,18 @@ QProgressBar::chunk {
 """
 
 
+def config_connect(user='0', ip="127.0.0.1", port=5000):
+    client = client_app.ServerConnector(user, ip, port)
+    return client
 
 is_killed=False
 stack_window_Height=0
 stack_window_Width=0
 name_factory_orig=''
 _translate = QtCore.QCoreApplication.translate
+client = config_connect()
+
+
 
 class NumericDelegate(QStyledItemDelegate):
     def __init__(self):
@@ -278,7 +284,7 @@ class Table_start_(QWidget, Table_start_v2):
     signal_send_data = pyqtSignal(object)
     signal_receive_data = pyqtSignal(object)
 
-    def __init__(self):
+    def __init__(self, cr_ed='create'):
         super( ).__init__()
         self.threadpool = QThreadPool()
         self.setupUi(self)
@@ -291,7 +297,12 @@ class Table_start_(QWidget, Table_start_v2):
         self.remove_department.clicked.connect(self.drop_row_department)
         self.add_post.clicked.connect(self.add_row_post)
         self.remove_post.clicked.connect(self.drop_row_post)
-        self.ButtonNext.clicked.connect(self.next)
+        if cr_ed=='create':
+            self.ButtonNext.clicked.connect(self.next)
+            self.refreshButton.hide()
+        elif cr_ed=='edit':
+            self.ButtonNext.clicked.connect(self.refresh)
+
         self.data_load= {"tables": {}}
         self.data_edit={
                         "tables": {"conf_criterion":[],
@@ -331,7 +342,7 @@ class Table_start_(QWidget, Table_start_v2):
 
     @check_send_data.setter
     def check_send_data(self, value):
-        self._flag_send_data = value
+        self.flag_send_data = value
         self.signal_send_data.emit(value)
 
     @property
@@ -347,19 +358,22 @@ class Table_start_(QWidget, Table_start_v2):
         self.table_conf_criterion.setRowCount(self.table_conf_criterion.rowCount()+1)
 
     def drop_row_criterion(self):
-        self.table_conf_criterion.setRowCount(self.table_conf_criterion.rowCount()-1)
+        if self.table_conf_criterion.rowCount()>1:
+            self.table_conf_criterion.setRowCount(self.table_conf_criterion.rowCount()-1)
 
     def add_row_department(self):
         self.table_department.setRowCount(self.table_department.rowCount()+1)
 
     def drop_row_department(self):
-        self.table_department.setRowCount(self.table_department.rowCount()-1)
+        if self.table_department.rowCount()>1:
+            self.table_department.setRowCount(self.table_department.rowCount()-1)
 
     def add_row_post(self):
         self.table_posts.setRowCount(self.table_posts.rowCount()+1)
 
     def drop_row_post(self):
-        self.table_posts.setRowCount(self.table_posts.rowCount()-1)
+        if self.table_posts.rowCount()>1:
+            self.table_posts.setRowCount(self.table_posts.rowCount()-1)
 
     def all_check(self):
         check_massage = {'conf_criterion': '',
@@ -397,11 +411,11 @@ class Table_start_(QWidget, Table_start_v2):
                 break
         return check_massage_v
 
-    def build_data_in_json(self, json_templ):
-        self.write_in_data(self.table_conf_criterion, self.conf_criterion, json_templ, 'conf_criterion')
-        self.write_in_data(self.table_department, self.department, json_templ, 'department')
-        self.write_in_data(self.table_bonus_koeficient, self.bonus_koeficient, json_templ, 'bonus_koeficient')
-        self.write_in_data(self.table_posts, self.posts, json_templ,'posts')
+    def build_data_in_json(self, json_templ, id_flag):
+        self.write_in_data_id(self.table_conf_criterion, self.conf_criterion, json_templ, 'conf_criterion', id_flag)
+        self.write_in_data_id(self.table_department, self.department, json_templ, 'department', id_flag)
+        self.write_in_data_id(self.table_bonus_koeficient, self.bonus_koeficient, json_templ, 'bonus_koeficient', id_flag)
+        self.write_in_data_id(self.table_posts, self.posts, json_templ,'posts', id_flag)
 
 
     def next(self):
@@ -412,18 +426,36 @@ class Table_start_(QWidget, Table_start_v2):
         else:
             self.label_error.setText(_translate("Form", ''))
             print(check_massage_v)
-            self.build_data_in_json(self.data_send)
+            self.build_data_in_json(self.data_send, id_flag=0)
             self.check_send_data = 1
 
     def refresh(self):
         check_massage_v = self.all_check()
+
+        for table in self.data_edit["tables"]:
+            if len(self.data_edit["tables"][table])>0:
+                self.data_edit["tables"][table].clear()
+        # if len(self.data_edit["tables"])>0:
+        #     self.data_edit["tables"].clear()
         if check_massage_v != 'ok':
+            self.label_error.setStyleSheet("color: rgb(255, 0, 0);")
             self.label_error.setText(_translate("Form", check_massage_v))
         else:
             self.label_error.setText(_translate("Form", ''))
-            print(check_massage_v)
-            self.build_data_in_json(self.data_edit)
+            print("check_massage_v=",check_massage_v)
+            self.build_data_in_json(self.data_edit, id_flag=1)
+            for table in self.data_load["tables"]:
+                id_key='id_'+table
+                for i in range(len(self.data_edit["tables"][table])):
+                    try:
+                        id_value=self.data_load["tables"][table][i][id_key]
+                        self.data_edit["tables"][table][i][id_key]=id_value
+                    except IndexError:
+                        id_value = self.data_edit["tables"][table][i-1][id_key]+1
+                        self.data_edit["tables"][table][i][id_key] = id_value
+
             self.check_send_data=2
+
 
     def chec_type(self, tablewidget, dir_data):
         list_key = list(dir_data.keys())
@@ -497,6 +529,26 @@ class Table_start_(QWidget, Table_start_v2):
 
             json_templ["tables"][name_table].append(dir_data.copy())
 
+    def write_in_data_id(self, tablewidget, dir_data, json_templ, name_table, id_flag=0):
+        id_key='id_'+name_table
+        id_dir={}
+        list_key=list(dir_data.keys())
+
+        if len(list_key)!=tablewidget.columnCount():
+            return('Количество ключей не совпадает с количеством столбцов')
+        for row in range (tablewidget.rowCount()):
+            if id_flag==1:
+                id_dir[id_key]=row
+            for column in range (tablewidget.columnCount()):
+                value=tablewidget.item(row, column).text()
+                if type(dir_data[list_key[column]]) != str :
+                    type_value=type(dir_data[list_key[column]])
+                    value=type_value(value)
+                dir_data[list_key[column]]=value
+            if id_flag==1:
+                dir_data=dict(id_dir, **dir_data)
+            json_templ["tables"][name_table].append(dir_data.copy())
+
     def contextMenuEvent(self, event):
         context_menu=QtWidgets.QMenu(self)
 
@@ -511,7 +563,7 @@ class Table_start_(QWidget, Table_start_v2):
         print("start_work_window")
 
     def start_send_data(self):
-        thred_send_data = Worker_2(self.cont_test)
+        thred_send_data = Worker_2(self.send_data)
         thred_send_data.signals.finished.connect(self.thread_complete)
 
         thred_progress_bar = Worker_2(partial(self.progress_bar.proc_counter, status='on')) # Any other args, kwargs are passed to the run function
@@ -536,11 +588,15 @@ class Table_start_(QWidget, Table_start_v2):
 
     def send_data(self):
         self.progress_bar.status_ = 'on'
+        answer_server = 'none_operation'
         if self.check_send_data==1:
-            result=client.add_criterion(data_send=self.data_send).content.decode("utf-8")
-            self.progress_bar.status_ = result
+            answer_server=client.add_criterion(data_send=self.data_send).content.decode("utf-8")
+
         elif self.check_send_data==2:
-            answer_server = 'none_operation'
+            self.data_send["tables"].clear()
+            print("send_data_2")
+            self.data_send["comand"]=1110
+
             #### del row ##########################################
             # добавили count_del_row строк в конец таблицы
             # отправляем индекс строки на удаления
@@ -618,8 +674,13 @@ class Table_start_(QWidget, Table_start_v2):
                             value_edit_list.append(value_edit_dict)
                     if len(value_edit_list) > 0:
                         self.data_send["tables"][table] = value_edit_list
-                client.edit_table(data_send=self.data_send)
-            pass
+                if len(self.data_send["tables"]):
+                    answer_server=client.edit_table(data_send=self.data_send).content.decode("utf-8")
+        self.progress_bar.status_ = answer_server
+        if answer_server=='ok' or answer_server=='none_operation':
+            self.label_error.setStyleSheet("color: rgb(16, 255, 149);")
+            self.label_error.setText(_translate("Form", "Изменения успешно загружены"))
+            #
 
     def thread_complete(self):
 
@@ -693,7 +754,7 @@ class mywindow(QtWidgets.QMainWindow):
     def btn_Open(self):
         print('open')
     def change_name(self):
-        worker = Worker_2(self.cont_test)
+        worker = Worker_2(self.start_creat_factory)
         worker.signals.finished.connect(self.thread_complete)
         worker_2 = Worker_2(partial(self.progress_bar.proc_counter, status='on')) # Any other args, kwargs are passed to the run function
         worker_2.kwargs['progress_callback'] = worker_2.signals.progress
@@ -725,7 +786,8 @@ class mywindow(QtWidgets.QMainWindow):
         return a
 
     def start_creat_factory(self):
-        result = client.add_db(comand=1111, db_comand=1).content.decode("utf-8")
+        client.name_db=self.name_factory_orig
+        result = client.add_db(command=1111, db_command=1).content.decode("utf-8") #comand=1111, db_comand=1
         self.progress_bar.status_ = result
 
     def thread_complete(self):
@@ -752,7 +814,7 @@ if __name__ == "__main__":
 
     import sys
 
-    client = client_app.ServerConnector('0', 'localhost', 5000)
+    #client = client_app.ServerConnector('0', 'localhost', 5000)
     app = QtWidgets.QApplication([])
     start_w = mywindow()
     count_crit=CountCriterion()
