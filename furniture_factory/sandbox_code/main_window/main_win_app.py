@@ -1,6 +1,6 @@
 from main_window_des import Ui_MainWindow
 from PyQt5 import QtWidgets, QtCore
-from my_project.furniture_factory.sandbox_code.demo_pb_in_mw import Table_start_, Worker_2, PopUpProgressB
+import my_project.furniture_factory.sandbox_code.demo_pb_in_mw as mw
 from functools import partial
 import time
 from my_project.furniture_factory.client_app import ServerConnector
@@ -11,9 +11,9 @@ from PyQt5.QtCore import QThread,pyqtSignal, QObject, pyqtSlot,QRunnable, QThrea
 
 
 def start_process(progress_bar, self=None):
-    thread_funct=Worker_2(self.load_struct)
+    thread_funct=mw.Worker_2(self.load_struct)
     thread_funct.signals.finished.connect(self.finish)
-    thred_progress_bar = Worker_2(partial(progress_bar.proc_counter, status='on'))  # Any other args, kwargs are passed to the run function
+    thred_progress_bar = mw.Worker_2(partial(progress_bar.proc_counter, status='on'))  # Any other args, kwargs are passed to the run function
     thred_progress_bar.kwargs['progress_callback'] = thred_progress_bar.signals.progress
     thred_progress_bar.signals.result.connect(progress_bar.print_output)
     thred_progress_bar.signals.finished.connect(progress_bar.thread_complete)
@@ -34,8 +34,12 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.center = int(1011 / 2)
         self.center_struct=int(1390/2)
         self.x_start_struct=60
-        self.struct=Table_start_()
-        self.struct.ButtonNext.setText(self._translate("Form", "ОБНОВИТЬ"))
+
+        self.struct=mw.Table_start_(cr_ed='edit')
+        mw.client=mw.config_connect(user='admin')
+        self.server=mw.client
+        self.struct.refreshButton.clicked.connect(self.refresh_inside_structure)
+        self.struct.ButtonNext.setText(self._translate("Form", "ОТПРАВИТЬ"))
         #####################################################################
         # self.lay_load_struct = QtWidgets.QWidget()
         # self.lay_load_struct.setObjectName("load_struct")
@@ -50,7 +54,7 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
         self.stackedWidget.addWidget(self.struct)
         self.TB_structure.clicked.connect(self.inside_structure)
         self.TB_search_personal.clicked.connect(self.personal)
-        self.progress_bar=PopUpProgressB()
+        self.progress_bar=mw.PopUpProgressB()
         self.threadpool = QtCore.QThreadPool()
         self.flag_one_load_struct=0
 
@@ -69,19 +73,21 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
     def load_struct(self):
         row=0
         column=0
-        print("load_struct  ")
-        name_db='novaja_mebel'
+        print("load_struct")
+        name_db='hellow'
         dir_table_name={"conf_criterion":self.struct.table_conf_criterion,
                         "department":self.struct.table_department,
                         "posts":self.struct.table_posts,
                         "bonus_koeficient":self.struct.table_bonus_koeficient}
 
-        server = ServerConnector("admin", "127.0.0.1", 5000)
-        server.name_db = name_db
+
+        self.server.name_db = name_db
         try:
 
-            get_json = server.get_struct().content
+            get_json = self.server.get_struct().content
             get_json = json.loads(get_json.decode('utf-8'))
+            self.struct.data_load["tables"]=get_json["tables"].copy()
+            #self.struct.data_load["tables"] = get_json["tables"].copy()
             for table_server in get_json["tables"]:
 
                 row=0
@@ -135,11 +141,14 @@ class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
 
     def inside_structure(self):
         self.stackedWidget.setCurrentIndex(3)
-        #self.load_struct()
         if self.flag_one_load_struct==0:
             start_process(self.progress_bar, self=self)
             self.progress_bar.status_ = 'on'
             self.flag_one_load_struct=1
+    def refresh_inside_structure(self):
+        start_process(self.progress_bar, self=self)
+        self.progress_bar.status_ = 'on'
+        self.flag_one_load_struct = 1
 
         # self.load_data()
 
