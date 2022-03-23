@@ -76,6 +76,21 @@ class FurnitureDtabase:
                 mycursor.execute(mysql_comand, data)
                 connection.commit()
 
+    def del_row(self, name_table, title_id :tuple, value_id:tuple):
+        with mysql.connector.connect(
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                port=self.port,
+                database=self.database
+
+        ) as connection:
+            mycursor = connection.cursor()
+            for n in range(len(title_id)):
+                mysql_comand = f"DELETE FROM {name_table} WHERE {title_id[n]} = {value_id[n]}"
+                mycursor.execute(mysql_comand)
+                connection.commit()
+
     def get_type(self, name_table, orig_t=1):
         with mysql.connector.connect(
                 host=self.host,
@@ -233,6 +248,7 @@ class FurnitureDtabase:
             data=mycursor.fetchall()
 
         return data
+
     def get_name_column(self, name_table):
         with mysql.connector.connect(
                 host=self.host,
@@ -248,6 +264,7 @@ class FurnitureDtabase:
             name_column=mycursor.fetchall()
 
         return name_column
+
     def edit_row(self, name_table, title: tuple, value : tuple):
         with mysql.connector.connect(
                 host=self.host,
