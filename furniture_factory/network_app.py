@@ -7,14 +7,11 @@ import database
 
 
 def full_check(json_data, stand_comand:dir, name_db):
-
-    a = request.data
-    #j = json.loads(a.decode('utf-8'))
+    my_db = FurnitureDtabase(name_db=name_db)
     ch_headline = check_headline(json_data, stand_comand)
     if ch_headline != True:
         return ch_headline
 
-    my_db = FurnitureDtabase(name_db=name_db)
     list_tables = my_db.get_tables()
     ch_table = check_table(json_data, list_tables)
     tables = json_data['tables']
@@ -49,7 +46,10 @@ def check_headline(data, stand_comand:dict):
 def check_type(data, name_table, type_columns):
 
     check_flag=True
+
     for row_table in data:
+        # if type(row_table) != list:
+        #     row_table=[row_table]
         for name_column in row_table:
             if not isinstance(row_table[name_column], type_columns[name_column]):
                 check_flag = f'ERROR WRITE:type the data types of the row "{name_column}" to the table "{name_table}' \
@@ -125,7 +125,7 @@ def add_factory(comand=1111):
                   'user': '0',
                   'db_comand':1}
     path_cr_db = "mysql_script/create_database.sql"
-    path_cr_tb = "mysql_script/create_table_factory.sql"
+    path_cr_tb = "mysql_script/create_table_factory_ed.sql"
 
     a=request.data
     j=json.loads(a.decode('utf-8'))
@@ -161,10 +161,6 @@ def get_inside_struct(name_db):
         column_table = my_db.get_name_column(name_table)
         for h in data_table:
             for i in range(len(h)):
-                # if type(h[i]) != str:
-                #     temp_data[column_table[i][0]] = str(h[i])
-                # else:
-                #     temp_data[column_table[i][0]] = str(h[i])
                 if type(h[i])==decimal.Decimal:
                     temp_data[column_table[i][0]] = float(h[i])
                 else:
@@ -173,11 +169,10 @@ def get_inside_struct(name_db):
         temp_data.clear()
     print("json")
     json_send = json.dumps(table_list)
-
     return json_send
 
 @app.route('/furniture/edit_tables_<name_db>/', methods=['POST'])
-def get_edit_tables(name_db):
+def set_edit_tables(name_db):
 
     stand_comand = {'comand': 1110,
                     'user': 'admin',
@@ -197,6 +192,51 @@ def get_edit_tables(name_db):
             value = [row[i] for i in title]
             my_db.edit_row(name_table, tuple(title), tuple(value))
     return "ok"
+
+@app.route('/furniture/delete_row_<name_db>/', methods=['POST'])
+def del_row_tables(name_db):
+    stand_comand = {'comand': 1110,
+                    'user': 'admin',
+                    'db_comand': 1,
+                    }
+    my_db = FurnitureDtabase(name_db=name_db)
+    a = request.data
+    j = json.loads(a.decode('utf-8'))
+    check_error = full_check(json_data=j, stand_comand=stand_comand, name_db=name_db)
+    if check_error != 'ok':
+        return check_error
+    list_tables = j['tables']
+    for name_table in list_tables:
+        list_rows = list_tables[name_table]
+        for row in list_rows:
+            title = list(row.keys())
+            value = [row[i] for i in title]
+            my_db.del_row(name_table, tuple(title), tuple(value))
+    return 'ok'
+
+@app.route('/furniture/add_row_<name_db>/', methods=['POST'])
+def add_row_tables(name_db):
+    stand_comand = {'comand': 1110,
+                    'user': 'admin',
+                    'db_comand': 1,
+                    }
+    my_db = FurnitureDtabase(name_db=name_db)
+    a = request.data
+    j = json.loads(a.decode('utf-8'))
+    check_error = full_check(json_data=j, stand_comand=stand_comand, name_db=name_db)
+    if check_error != 'ok':
+        return check_error
+    list_tables = j['tables']
+    for name_table in list_tables:
+        list_rows = list_tables[name_table]
+        for row in list_rows:
+            title = list(row.keys())
+            value = [row[i] for i in title]
+            my_db.add_row(name_table, tuple(title), tuple(value))
+    return 'ok'
+
+
+
 
 
 
