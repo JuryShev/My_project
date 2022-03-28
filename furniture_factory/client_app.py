@@ -10,6 +10,7 @@ class ServerConnector():
         self.url = f"http://{adress}:{port}"
 
     def add_db(self, command, db_command):
+        print('\n')
         result = requests.post(f"{self.url}/furniture/add_db",
                                json={
                                    "comand": command,
@@ -58,7 +59,10 @@ class ServerConnector():
     def load_data_cond(self):
         pass
 
-    def load_data(self, json_request):
-        result = requests.post(f"{self.url}/furniture/get_inside_struct/",
-                               json=json_request)
-        pass
+    def load_databases(self):
+        result = requests.post(f"{self.url}/furniture/get_databases/",
+                               json={
+                                   "comand": 1110,
+                                   "user": self.id_user,
+                                   "db_comand": 1})
+        return result

@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import QDialog, QAction
 # Импортируем наш шаблон.
 from my_project.furniture_factory.start_window import Ui_MainWindow
 from my_project.furniture_factory.win_dialog_new_fuctory import Ui_Dialog as creat_dialog
+from my_project.furniture_factory.dialog_select_factory import ChooseFactoryDialog
 from my_project.furniture_factory.CountCriterion_w import CountCr_2, CountCr
 from my_project.furniture_factory.Table_start import Table_start
 from my_project.furniture_factory.Table_start_v2 import Table_start_v2
@@ -19,6 +20,7 @@ import json
 import sys
 import traceback
 from functools import partial
+
 
 DEFAULT_STYLE = """
 QProgressBar{
@@ -218,7 +220,7 @@ class PopUpProgressB(QWidget):
         self.hide()
 
 class CountCriterion(QWidget, CountCr):
-    def __init__(self):
+    def __init__(self, MainWindowAll, NextWidget):
         super( ).__init__()
         self.setupUi(self)
         self.w_width=784
@@ -226,20 +228,24 @@ class CountCriterion(QWidget, CountCr):
         self.value_criterion=0
         self.value_departmen = 0
         self.ButtonNext.clicked.connect(self.next)
+        self.MainWindowAll = MainWindowAll
+
+        self.table_start_=NextWidget
 
     def next(self):
-        table_start_.value_criterion = int(self.spinBox_criterion.value())
-        table_start_.value_department = int(self.spinBox_departmen.value())
-        if table_start_.value_department>0 and table_start_.value_criterion>0:
-            stack_window_Height = table_start_.w_height
-            stack_window_Width = table_start_.w_width
-            table_start_.label_name_factory.setText(_translate("Form", start_w.name_factory_orig))
-            table_start_.table_conf_criterion.setRowCount(table_start_.value_criterion)
-            table_start_.table_department.setRowCount(table_start_.value_department)
-            stack_window.setFixedHeight(stack_window_Height)
-            stack_window.setFixedWidth(stack_window_Width)
-            stack_window.setCurrentIndex(stack_window.currentIndex() + 1)
-            print(f"value_criterion={table_start_.value_criterion}\nvalue_departmen={table_start_.value_department} ")
+        self.table_start_.value_criterion = int(self.spinBox_criterion.value())
+        self.table_start_.value_department = int(self.spinBox_departmen.value())
+        if self.table_start_.value_department>0 and self.table_start_.value_criterion>0:
+            stack_window_Height = self.table_start_.w_height
+            stack_window_Width = self.table_start_.w_width
+            self.table_start_.label_name_factory.setText(_translate("Form", client.name_db))
+            self.table_start_.table_conf_criterion.setRowCount(self.table_start_.value_criterion)
+            self.table_start_.table_department.setRowCount(self.table_start_.value_department)
+            self.MainWindowAll.setMaximumWidth(stack_window_Width)
+            self.MainWindowAll.setMaximumHeight(stack_window_Height)
+            self.MainWindowAll.resize(stack_window_Width, stack_window_Height)
+            self.MainWindowAll.GlobalstackedWidget.setCurrentIndex(self.MainWindowAll.GlobalstackedWidget.currentIndex() + 1)
+            print(f"value_criterion={self.table_start_.value_criterion}\nvalue_departmen={self.table_start_.value_department} ")
         else:
             self.label_error.setText(_translate("Form", "Значение должны быть больше нуля"))
             print('критерий равен 0')
@@ -254,6 +260,41 @@ class CountCriterion(QWidget, CountCr):
         if action == new_action:
             print("new")
 
+class ChooseFactoryDialog_(QDialog, ChooseFactoryDialog ):
+    def __init__(self, parent, list_factory):
+        super().__init__(parent)
+        self.setupUi(self)
+        self.list_factory=list_factory
+
+        self.buttonBox.accepted.connect(self.accept_data)
+        self.buttonBox.rejected.connect(self.reject_data)
+        self.write_in_combobox()
+        self.flag_choose = 0
+
+
+    def write_in_combobox(self):
+        for factory in self.list_factory:
+            self.comboBox.addItem(factory)
+
+
+
+
+    def accept_data(self):
+        client.name_db = self.comboBox.currentText()
+        self.flag_choose = 1
+        self.close()
+
+
+        pass
+
+
+
+    def reject_data(self):
+        print('reject')
+        self.flag_choose = 0
+        self.close()
+
+
 class DialogCreatFactory(QDialog, creat_dialog):
     def __init__(self, parent):
         super().__init__(parent)
@@ -262,8 +303,9 @@ class DialogCreatFactory(QDialog, creat_dialog):
         self.name_factory_orig = ''
         self.setWindowTitle("Название предприятия")
 
-        self.buttonBox.accepted.connect(self.acept_data)
+        self.buttonBox.accepted.connect(self.accept_data)
         self.buttonBox.rejected.connect(self.reject_data)
+
 
 
     def acept_data(self):
@@ -284,12 +326,12 @@ class Table_start_(QWidget, Table_start_v2):
     signal_send_data = pyqtSignal(object)
     signal_receive_data = pyqtSignal(object)
 
-    def __init__(self, cr_ed='create'):
+    def __init__(self, MainWindowAll=None, cr_ed='create'):
         super( ).__init__()
         self.threadpool = QThreadPool()
         self.setupUi(self)
         self.w_width=1318
-        self.w_height = 752
+        self.w_height = 760
         self.progress_bar = PopUpProgressB()
         self.add_conf_criterion.clicked.connect(self.add_row_criterion)
         self.remove_conf_criterion.clicked.connect(self.drop_row_criterion)
@@ -330,6 +372,8 @@ class Table_start_(QWidget, Table_start_v2):
         self.flag_receive_data=0
         self.signal_send_data.connect(self.start_send_data)
         self.signal_receive_data.connect(self.start_work_window)
+        self.MainWindowAll=MainWindowAll
+
         # delegate = NumericDelegate(self.tableWidget)
         # self.tableWidget.setItemDelegate(delegate)
 
@@ -686,7 +730,11 @@ class Table_start_(QWidget, Table_start_v2):
 
         if self.progress_bar.status_ == 'ok':
             print(self.progress_bar.status_)
-
+            if self.MainWindowAll!=None:
+                self.MainWindowAll.setMaximumWidth(4000)
+                self.MainWindowAll.setMaximumHeight(4000)
+                self.MainWindowAll.resize(1500,901)
+                self.MainWindowAll.GlobalstackedWidget.setCurrentIndex(self.MainWindowAll.GlobalstackedWidget.currentIndex() + 1)
         else :
             self.label_error.setText(_translate("Form", self.progress_bar.status_))
             print(self.progress_bar.status_)
@@ -696,7 +744,7 @@ class mywindow(QtWidgets.QMainWindow):
     valueChanged = pyqtSignal(object)
     flagServerChange=pyqtSignal(object)
 
-    def __init__(self):
+    def __init__(self, MainWindowAll, NextWidget):
         super(mywindow, self).__init__()
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
@@ -714,6 +762,20 @@ class mywindow(QtWidgets.QMainWindow):
         self.progress_bar=PopUpProgressB()
         self.start_w_width=784
         self.start_w_height = 545
+        self.MainWindowAll=MainWindowAll
+        self.MainWindowAll.resize( self.start_w_width,self.start_w_height)
+
+        #self.MainWindowAll.setWindowFlags(self.MainWindowAll.windowFlags() | QtCore.Qt.MSWindowsFixedSizeDialogHint)
+        #MainWindowAll.setMaximumSize(784, 545)
+        #self.MainWindowAll.setFixedSize(self.MainWindowAll.width(), self.MainWindowAll.height())
+        self.count_crit=NextWidget
+
+        #self.maxres()
+
+    def maxres(self):
+        self.MainWindowAll.setMaximumWidth(self.start_w_width)
+        self.MainWindowAll.setMaximumHeight(self.start_w_height)
+
 
     @property
     def name_factory(self):
@@ -734,6 +796,8 @@ class mywindow(QtWidgets.QMainWindow):
         self.flagServerChange.emit(value)
 
     def btn_Creat(self):
+
+
         dlg = DialogCreatFactory(self)
         dlg.exec()
         if len(dlg.name_factory)>0:
@@ -752,7 +816,18 @@ class mywindow(QtWidgets.QMainWindow):
             #print(result)
 
     def btn_Open(self):
+
         print('open')
+        get_json=client.load_databases().content
+        databases = json.loads(get_json.decode('utf-8'))
+        dlg = ChooseFactoryDialog_(self, list_factory=databases)
+        dlg.exec()
+        if dlg.flag_choose==1:
+            self.MainWindowAll.setMaximumWidth(4000)
+            self.MainWindowAll.setMaximumHeight(4000)
+            self.MainWindowAll.resize(1500, 901)
+            self.MainWindowAll.GlobalstackedWidget.setCurrentIndex(
+            self.MainWindowAll.GlobalstackedWidget.currentIndex() + 3)
     def change_name(self):
         worker = Worker_2(self.start_creat_factory)
         worker.signals.finished.connect(self.thread_complete)
@@ -769,13 +844,15 @@ class mywindow(QtWidgets.QMainWindow):
 
     def flag_server_change(self):
         print("new win")
-        stack_window_Height = count_crit.w_height
-        stack_window_Width = count_crit.w_width
-        count_crit.label_name_factory.setText(_translate("Form", self.name_factory_orig))
+        stack_window_Height = self.count_crit.w_height
+        stack_window_Width = self.count_crit.w_width
+        self.count_crit.label_name_factory.setText(_translate("Form", self.name_factory_orig))
         client.name_db=self.name_factory_orig
-        stack_window.setFixedHeight(stack_window_Height)
-        stack_window.setFixedWidth(stack_window_Width)
-        stack_window.setCurrentIndex(stack_window.currentIndex()+1)
+        self.MainWindowAll.setMaximumWidth(stack_window_Width)
+        self.MainWindowAll.setMaximumHeight(stack_window_Height)
+        self.MainWindowAll.resize(stack_window_Width, stack_window_Height)
+        self.MainWindowAll.GlobalstackedWidget.setCurrentIndex(self.MainWindowAll.GlobalstackedWidget.currentIndex()+1)
+
 
     def cont_test(self):
         a = 0
@@ -808,6 +885,12 @@ class mywindow(QtWidgets.QMainWindow):
         else:
             event.ignore()
 
+class RuleForm():
+
+    def __init__(self, ui_):
+        ui_.resize(500, 500)
+        ui_.setWindowFlags(ui_.windowFlags() | QtCore.Qt.MSWindowsFixedSizeDialogHint)
+
 if __name__ == "__main__":
 
 
@@ -815,28 +898,28 @@ if __name__ == "__main__":
     import sys
 
     #client = client_app.ServerConnector('0', 'localhost', 5000)
-    app = QtWidgets.QApplication([])
-    start_w = mywindow()
-    count_crit=CountCriterion()
-    table_start_=Table_start_()
-    stack_window_Height=start_w.start_w_height
-    stack_window_Width=start_w.start_w_width
-    stack_window = QtWidgets.QStackedWidget()
-    stack_window.setStyleSheet("background-color: rgb(74, 80, 106);")
-
-    stack_window.addWidget(start_w)
-    stack_window.addWidget(count_crit)
-    stack_window.addWidget(table_start_)
-
-    stack_window.setFixedHeight(stack_window_Height)
-    stack_window.setFixedWidth(stack_window_Width)
-
-    stack_window.show()
-    # ########################################
-    # application = CountCriterion()
-    # application.show()
-    ############################################
-    # application = mywindow()
-    # application.show()
-    sys.exit(app.exec())
+    # app = QtWidgets.QApplication([])
+    # start_w = mywindow()
+    # count_crit=CountCriterion()
+    # table_start_=Table_start_()
+    # stack_window_Height=start_w.start_w_height
+    # stack_window_Width=start_w.start_w_width
+    # stack_window = QtWidgets.QStackedWidget()
+    # stack_window.setStyleSheet("background-color: rgb(74, 80, 106);")
+    #
+    # stack_window.addWidget(start_w)
+    # stack_window.addWidget(count_crit)
+    # stack_window.addWidget(table_start_)
+    #
+    # stack_window.setFixedHeight(stack_window_Height)
+    # stack_window.setFixedWidth(stack_window_Width)
+    #
+    # stack_window.show()
+    # # ########################################
+    # # application = CountCriterion()
+    # # application.show()
+    # ############################################
+    # # application = mywindow()
+    # # application.show()
+    # sys.exit(app.exec())
 

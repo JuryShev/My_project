@@ -12,6 +12,7 @@ def create_database(name_db, path_script):
         sql_as_string = sql_file.read()
         sql_as_string = sql_as_string.replace('*', name_db)
         mycursor = connection.cursor()
+        print(f"sql_as_string={sql_as_string}")
         mycursor.execute(sql_as_string)
 
 def create_tables_factory(name_db, path_script):
@@ -27,6 +28,28 @@ def create_tables_factory(name_db, path_script):
         sql_as_string = sql_file.read()
         mycursor = connection.cursor()
         mycursor.execute(sql_as_string)
+
+def get_databases():
+    with mysql.connector.connect(
+            host='127.0.0.1',
+            user='root',
+            password='1234',
+            port='3306'
+            # database='fur_database'
+
+    ) as connection:
+
+        sql_command = 'SHOW SCHEMAS'
+        mycursor = connection.cursor()
+        mycursor.execute(sql_command)
+        tuple_databases = mycursor.fetchall()
+        list_databases = []
+        forbidden_set = {'sys', 'performance_schema', 'information_schema', 'mysql'}
+        for i in tuple_databases:
+            if i[0] not in forbidden_set:
+                list_databases.append(i[0])
+        return list_databases
+
 
 
 class FurnitureDtabase:

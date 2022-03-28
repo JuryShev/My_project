@@ -122,7 +122,7 @@ def add_personal(name_db):
 def add_factory(comand=1111):
 
     stand_comand={'comand': comand,
-                  'user': '0',
+                  'user': 'admin',
                   'db_comand':1}
     path_cr_db = "mysql_script/create_database.sql"
     path_cr_tb = "mysql_script/create_table_factory_ed.sql"
@@ -235,6 +235,25 @@ def add_row_tables(name_db):
             my_db.add_row(name_table, tuple(title), tuple(value))
     return 'ok'
 
+@app.route('/furniture/get_databases/', methods=['POST'])
+def get_databases():
+
+    stand_comand = {'comand': 1110,
+                    'user': 'admin',
+                    'db_comand': 1,
+                    }
+    a = request.data
+    j = json.loads(a.decode('utf-8'))
+    check_error = check_headline(j, stand_comand)
+    if check_error != True :
+        return check_error
+    list_databases = database.get_databases()
+
+    json_send = json.dumps(list_databases)
+    return json_send
+
+
+
 
 
 
@@ -286,5 +305,5 @@ def add_row_tables(name_db):
 #             return f'department named {check_value[:-1]} already exists'
 """***********************************************"""
 if __name__ == '__main__':
-#    app.debug=True
+    #app.debug=True
     app.run( port=5000)
