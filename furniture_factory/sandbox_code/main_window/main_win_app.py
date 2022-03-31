@@ -1,6 +1,8 @@
 from main_window_des import Ui_MainWindow
 from PyQt5 import QtWidgets, QtCore, QtGui
+from PyQt5.QtWidgets import QDialog
 import my_project.furniture_factory.sandbox_code.demo_pb_in_mw as mw
+from my_project.furniture_factory.DialofAddPersonal import DialogAddPersonal
 from functools import partial
 import time
 from my_project.furniture_factory.client_app import ServerConnector
@@ -24,269 +26,94 @@ def start_process(progress_bar, self=None):
     progress_bar.setWindowModality(QtCore.Qt.ApplicationModal)
     progress_bar.show()
 
-class MainWindow(QtWidgets.QMainWindow, Ui_MainWindow):
-    resized = QtCore.pyqtSignal()
-    def __init__(self, parent=None):
-        self._translate = QtCore.QCoreApplication.translate
-        super(MainWindow, self).__init__(parent=parent)
+
+class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
+    def __init__(self, parent):
+        super().__init__(parent)
         self.setupUi(self)
-        self.resized.connect(self.someFunction)
-        self.center = int(1011 / 2)
-        self.center_struct=int(1390/2)
-        self.x_start_struct=60
-
-        self.struct=mw.Table_start_(cr_ed='edit')
-        mw.client=mw.config_connect(user='admin')
-        self.server=mw.client
-        self.struct.refreshButton.clicked.connect(self.refresh_inside_structure)
-        self.struct.ButtonNext.setText(self._translate("Form", "ОТПРАВИТЬ"))
-        #####################################################################
-        # self.lay_load_struct = QtWidgets.QWidget()
-        # self.lay_load_struct.setObjectName("load_struct")
-        # self.frame = QtWidgets.QFrame(self.lay_load_struct)
-        # self.frame.setGeometry(QtCore.QRect(30, 40, 1331, 711))
-        # self.frame.setFrameShape(QtWidgets.QFrame.StyledPanel)
-        # self.frame.setFrameShadow(QtWidgets.QFrame.Raised)
-        # self.frame.setObjectName("frame")
-        # self.struct.setupUi(self.frame)
-        # self.struct.label_error.setText(self._translate("Form", "Ошибка"))
-        #####################################################################
-        self.stackedWidget.addWidget(self.struct)
-        self.TB_structure.clicked.connect(self.inside_structure)
-        self.TB_search_personal.clicked.connect(self.personal)
-        self.progress_bar=mw.PopUpProgressB()
-        self.threadpool = QtCore.QThreadPool()
-        self.flag_one_load_struct=0
-
-    def resizeEvent(self, event):
-        self.resized.emit()
-        return super(MainWindow, self).resizeEvent(event)
-
-    def someFunction(self):
-            self.w = self.width()
-            self.h = self.height()
-            self.move_ = int(self.w / 2 - self.x_start)
-            self.move_struct = int(self.w / 2 - self.x_start_struct)
-            self.groupBox.setGeometry(QtCore.QRect(self.move_-self.center, 30, 1011, 741))
-            self.struct.main_frame.setGeometry(QtCore.QRect(self.move_struct-self.center_struct, 30, 1311, 741))
-
-    def load_struct(self):
-        row=0
-        column=0
-        print("load_struct")
-        name_db='hellow'
-        dir_table_name={"conf_criterion":self.struct.table_conf_criterion,
-                        "department":self.struct.table_department,
-                        "posts":self.struct.table_posts,
-                        "bonus_koeficient":self.struct.table_bonus_koeficient}
-
-
-        self.server.name_db = name_db
-        try:
-
-            get_json = self.server.get_struct().content
-            get_json = json.loads(get_json.decode('utf-8'))
-            self.struct.data_load["tables"]=get_json["tables"].copy()
-            #self.struct.data_load["tables"] = get_json["tables"].copy()
-            for table_server in get_json["tables"]:
-
-                row=0
-                table_vision=dir_table_name[table_server]
-                table_vision.setRowCount(len(get_json["tables"][table_server]))
-                for row_s in get_json["tables"][table_server]:
-                    keys_row_s = list(row_s.keys())
-                    column=0
-                    for key_row_s in keys_row_s[1:]:
-                            if type(row_s[key_row_s])==str:
-                                table_vision.setItem(row, column, QtWidgets.QTableWidgetItem(row_s[key_row_s]))
-                            elif type(row_s[key_row_s])!=str :
-                                table_vision.setItem(row, column, QtWidgets.QTableWidgetItem(str(row_s[key_row_s])))
-                            column+=1
-                    row+=1
-        except:
-            print("load_struct  2")
-            self.struct.label_error.setText(self._translate("Form", "Ошибка подключения к серверу"))
-        finally:
-             self.progress_bar.status_ = 'ok'
-
-
-    def cont_test(self):
-        a = 0
-        for i in range(5):
-            time.sleep(0.5)
-            print(i)
-        self.progress_bar.status_ = 'ok'
-        return a
-
-    def finish(self):
-        print("finish")
-        return None
-
-###############function_button##################################################
-
-    def personal(self):
-        print("0")
-        self.stackedWidget.setCurrentIndex(0)
-        pass
-
-    def analytics(self):
-        print("1")
-        self.stackedWidget.setCurrentIndex(1)
-        pass
-
-    def projects (self):
-        print("2")
-        self.stackedWidget.setCurrentIndex(2)
-        pass
-
-    def inside_structure(self):
-        self.stackedWidget.setCurrentIndex(3)
-        if self.flag_one_load_struct==0:
-            start_process(self.progress_bar, self=self)
-            self.progress_bar.status_ = 'on'
-            self.flag_one_load_struct=1
-
-    def refresh_inside_structure(self):
-        start_process(self.progress_bar, self=self)
-        self.progress_bar.status_ = 'on'
-        self.flag_one_load_struct = 1
-
-        # self.load_data()
-
-
-class MainWindow_all(object):
-    resized = QtCore.pyqtSignal()
-    def __init__(self, MW):
-        # super(MainWindow_all, self).__init__(parent=parent)
-        self.x_start = 0
-        self.y_start = 0
-
-        self.MW=MW
-        self.MW.resized.connect(self.someFunction)
-    def setupUi(self):
-        self.screen = QtWidgets.QDesktopWidget().screenGeometry()
-        self.MW.setObjectName("MainWindow")
-        self.MW.resize(1500, 901)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.MinimumExpanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.MW.sizePolicy().hasHeightForWidth())
-        self.MW.setSizePolicy(sizePolicy)
-        self.MW.setStyleSheet("background-color: rgb(74, 80, 106);")
-        self.centralwidget = QtWidgets.QWidget(self.MW)
-        self.centralwidget.setObjectName("centralwidget")
-        self.stackedWidget = QtWidgets.QStackedWidget(self.centralwidget)
-        self.stackedWidget.setGeometry(QtCore.QRect(self.x_start, self.y_start, self.screen.width() - self.x_start,
-                                                    self.screen.height() - self.y_start))
-        self.stackedWidget.setAutoFillBackground(False)
-        self.stackedWidget.setStyleSheet("")
-        self.stackedWidget.setObjectName("stackedWidget")
-
-        self.page_2 = QtWidgets.QWidget()
-        self.page_2.setObjectName("page_2")
-        self.stackedWidget.addWidget(MainWindow())
-        self.page_3 = QtWidgets.QWidget()
-        self.page_3.setObjectName("page_3")
-        self.stackedWidget.addWidget(self.page_3)
-
-        self.MW.setCentralWidget(self.centralwidget)
-        # self.menubar = QtWidgets.QMenuBar(MW)
-        # self.menubar.setGeometry(QtCore.QRect(0, 0, 1274, 21))
-        # self.menubar.setObjectName("menubar")
-        # MW.setMenuBar(self.menubar)
-        # self.statusbar = QtWidgets.QStatusBar(MW)
-        # self.statusbar.setObjectName("statusbar")
-        # MW.setStatusBar(self.statusbar)
-
-
-
-        self.stackedWidget.setCurrentIndex(0)
-        #MW.setWindowFlags(MW.windowFlags()| QtCore.Qt.MSWindowsFixedSizeDialogHint)
-        QtCore.QMetaObject.connectSlotsByName(self.MW)
-
-    def resizeEvent(self, event):
-        self.resized.emit()
-        return super(MainWindow_all, self).resizeEvent(event)
-    def someFunction(self):
-            self.w = self.MW.width()
-            self.h = self.MW.height()
-
-
-class MainWindow_all_2(QtWidgets.QMainWindow):
-    resized = QtCore.pyqtSignal()
-
-    def __init__(self, parent=None):
-        super(MainWindow_all_2, self).__init__(parent=parent)
-        self.x_start = 0
-        self.y_start = 0
-        self.resized.connect(self.someFunction)
-        self.WorkWindow=MainWindow()
+        ################asteric########################
+        self.Asterisk_FamalyName = QtWidgets.QLabel(self)
+        self.Asterisk_FamalyName.setEnabled(True)
+        self.Asterisk_FamalyName.hide()
+        self.Asterisk_FamalyName.setGeometry(QtCore.QRect(297, 52, 17, 17))
+        self.Asterisk_FamalyName.setStyleSheet("border-image: url(./icon/asterisk.png);")
+        self.Asterisk_FamalyName.setText("")
+        self.Asterisk_FamalyName.setObjectName("Asterisk_FamalyName")
+        self.Asterisk_Name = QtWidgets.QLabel(self)
+        self.Asterisk_Name.hide()
+        self.Asterisk_Name.setEnabled(True)
+        self.Asterisk_Name.setGeometry(QtCore.QRect(297, 82, 17, 17))
+        self.Asterisk_Name.setStyleSheet("border-image: url(./icon/asterisk.png);")
+        self.Asterisk_Name.setText("")
+        self.Asterisk_Name.setObjectName("Asterisk_Name")
+        self.Asterisk_BaseRate = QtWidgets.QLabel(self)
+        self.Asterisk_BaseRate.hide()
+        self.Asterisk_BaseRate.setEnabled(True)
+        self.Asterisk_BaseRate.setGeometry(QtCore.QRect(158, 377, 17, 17))
+        self.Asterisk_BaseRate.setStyleSheet("border-image: url(./icon/asterisk.png);")
+        self.Asterisk_BaseRate.setText("")
+        self.Asterisk_BaseRate.setObjectName("Asterisk_BaseRate")
+        self.Asterisk_Attestation = QtWidgets.QLabel(self)
+        self.Asterisk_Attestation.setEnabled(True)
+        self.Asterisk_Attestation.hide()
+        self.Asterisk_Attestation.setGeometry(QtCore.QRect(297, 377, 17, 17))
+        self.Asterisk_Attestation.setStyleSheet("border-image: url(./icon/asterisk.png);")
+        self.Asterisk_Attestation.setText("")
+        self.Asterisk_Attestation.setObjectName("Asterisk_Attestation")
+        self.Asterisk_FatherName = QtWidgets.QLabel(self)
+        self.Asterisk_FatherName.setEnabled(True)
+        self.Asterisk_FatherName.hide()
+        self.Asterisk_FatherName.setGeometry(QtCore.QRect(297, 112, 17, 17))
+        self.Asterisk_FatherName.setStyleSheet("border-image: url(./icon/asterisk.png);")
+        self.Asterisk_FatherName.setText("")
+        self.Asterisk_FatherName.setObjectName("Asterisk_FatherName")
+        self.Asterisk_Day = QtWidgets.QLabel(self)
+        self.Asterisk_Day.setEnabled(True)
+        self.Asterisk_Day.hide()
+        self.Asterisk_Day.setGeometry(QtCore.QRect(297, 180, 17, 17))
+        self.Asterisk_Day.setStyleSheet("border-image: url(./icon/asterisk.png);")
+        self.Asterisk_Day.setText("")
+        self.Asterisk_Day.setObjectName("Asterisk_Day")
+        self.Asterisk_NumberPhone = QtWidgets.QLabel(self)
+        self.Asterisk_NumberPhone.setEnabled(True)
+        self.Asterisk_NumberPhone.hide()
+        self.Asterisk_NumberPhone.setGeometry(QtCore.QRect(297, 240, 17, 17))
+        self.Asterisk_NumberPhone.setStyleSheet("border-image: url(./icon/asterisk.png);")
+        self.Asterisk_NumberPhone.setText("")
+        self.Asterisk_NumberPhone.setObjectName("Asterisk_NumberPhone")
+        ################################################
+    def accept(self) -> None:
+        flag_filling=1
+        LE_list=[self.LE_Name,
+                 self.LE_FatherName,
+                 self.LE_FamilyName,
+                 self.LE_NuberPhone,
+                 self.LE_Day,
+                 self.LE_BaseRate,
+                 self.LE_Attestation]
+        Asteric_list=[self.Asterisk_Name,
+                      self.Asterisk_FatherName,
+                      self.Asterisk_FamalyName,
+                      self.Asterisk_NumberPhone,
+                      self.Asterisk_Day,
+                      self.Asterisk_BaseRate,
+                      self.Asterisk_Attestation]
+        self.Asterisk_NumberPhone.show()
+        for id,LE in enumerate(LE_list):
+            text=LE.text()
+            Asteric_list[id].hide()
+            if len(text)==0 or (text.find('+')!=-1 and len(text.replace(' ', ''))<15):
+                Asteric_list[id].show()
+                flag_filling=0
 
 
 
 
-    def setupUi(self):
-        self.screen = QtWidgets.QDesktopWidget().screenGeometry()
-        self.setObjectName("MainWindow")
-        self.resize(1500, 901)
-        sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.MinimumExpanding)
-        sizePolicy.setHorizontalStretch(0)
-        sizePolicy.setVerticalStretch(0)
-        sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
-        self.setSizePolicy(sizePolicy)
-        self.setStyleSheet("background-color: rgb(74, 80, 106);")
-        self.centralwidget = QtWidgets.QWidget(self)
-        self.centralwidget.setObjectName("centralwidget")
-        self.stackedWidget = QtWidgets.QStackedWidget(self.centralwidget)
-        self.stackedWidget.setGeometry(QtCore.QRect(self.x_start, self.y_start, self.screen.width() - self.x_start,
-                                                    self.screen.height() - self.y_start))
-        self.stackedWidget.setAutoFillBackground(False)
-        self.stackedWidget.setStyleSheet("")
-        self.stackedWidget.setObjectName("stackedWidget")
-
-        self.page_2 = QtWidgets.QWidget()
-        self.page_2.setObjectName("page_2")
-
-        self.stackedWidget.addWidget(self.WorkWindow)
-        self.page_3 = QtWidgets.QWidget()
-        self.page_3.setObjectName("page_3")
-        self.stackedWidget.addWidget(self.page_3)
-
-        self.setCentralWidget(self.centralwidget)
-
-        # self.menubar = QtWidgets.QMenuBar(MW)
-        # self.menubar.setGeometry(QtCore.QRect(0, 0, 1274, 21))
-        # self.menubar.setObjectName("menubar")
-        # MW.setMenuBar(self.menubar)
-        # self.statusbar = QtWidgets.QStatusBar(MW)
-        # self.statusbar.setObjectName("statusbar")
-        # MW.setStatusBar(self.statusbar)
-
-        self.stackedWidget.setCurrentIndex(0)
-
-        # MW.setWindowFlags(MW.windowFlags()| QtCore.Qt.MSWindowsFixedSizeDialogHint)
-        QtCore.QMetaObject.connectSlotsByName(self)
-    def position(self):
-        print("pos")
-        self.w = self.width()
-        self.h = self.height()
-        self.move_ = int(self.w / 2 - self.WorkWindow.x_start)
-        self.move_struct = int(self.w / 2 - self.WorkWindow.x_start_struct)
-        self.WorkWindow.groupBox.setGeometry(QtCore.QRect(1000, 30, 1011, 741))
-        self.WorkWindow.struct.main_frame.setGeometry(QtCore.QRect(self.move_struct - self.WorkWindow.center_struct, 30, 1311, 741))
-
-    def resizeEvent(self, event):
-        self.resized.emit()
-        return super(MainWindow_all_2, self).resizeEvent(event)
-
-    def someFunction(self):
-        self.w = self.width()
-        self.h = self.height()
-        self.move_ = int(self.w / 2 - self.WorkWindow.x_start)
-        self.move_struct = int(self.w / 2 - self.WorkWindow.x_start_struct)
-        self.WorkWindow.groupBox.setGeometry(QtCore.QRect(self.move_ - self.WorkWindow.center, 30, 1011, 741))
-        self.WorkWindow.struct.main_frame.setGeometry(QtCore.QRect(self.move_struct - self.WorkWindow.center_struct, 30, 1311, 741))
-        print(f"self.width()={self.width()}\nself.height()={self.height()}\n\n")
+        if flag_filling==0:
+            print("Не все заполнено")
+        if flag_filling==1:
+            print("все отлично")
+            pass
 
 
 class MainWindow_all_3(QtWidgets.QMainWindow):
@@ -313,6 +140,7 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         self.WorkWindow.stackedWidget.addWidget(self.struct)
         self.WorkWindow.TB_structure.clicked.connect(self.inside_structure)
         self.WorkWindow.TB_search_personal.clicked.connect(self.personal)
+        self.WorkWindow.TB_AddPersonal.clicked.connect(self.add_personal)
         self.progress_bar=mw.PopUpProgressB()
         self.threadpool = QtCore.QThreadPool()
         self.flag_one_load_struct=0
@@ -355,39 +183,20 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         self.GlobalstackedWidget.addWidget(self.WorkWindow.centralwidget)
         self.setCentralWidget(self.centralwidget)
         self.GlobalstackedWidget.setCurrentIndex(0)
-    # def setupUi_(self):
-    #     self.screen = QtWidgets.QDesktopWidget().screenGeometry()
-    #     self.setObjectName("MainWindow")
-    #     self.resize(1500, 901)
-    #     sizePolicy = QtWidgets.QSizePolicy(QtWidgets.QSizePolicy.Preferred, QtWidgets.QSizePolicy.MinimumExpanding)
-    #     sizePolicy.setHorizontalStretch(0)
-    #     sizePolicy.setVerticalStretch(0)
-    #     sizePolicy.setHeightForWidth(self.sizePolicy().hasHeightForWidth())
-    #     self.setSizePolicy(sizePolicy)
-    #     self.setStyleSheet("background-color: rgb(74, 80, 106);")
-    #     self.centralwidget = QtWidgets.QWidget(self)
-    #     self.centralwidget.setObjectName("centralwidget")
-    #     self.GlobalstackedWidget = QtWidgets.QStackedWidget(self.centralwidget)
-    #     self.GlobalstackedWidget.setGeometry(QtCore.QRect(self.x_start, self.y_start, self.screen.width() - self.x_start,
-    #                                                 self.screen.height() - self.y_start))
-    #     self.GlobalstackedWidget.setAutoFillBackground(False)
-    #     self.GlobalstackedWidget.setStyleSheet("")
-    #     self.GlobalstackedWidget.setObjectName("stackedWidget")
-    #    # self.GlobalstackedWidget.addWidget(self.WorkWindow.centralwidget)
-    #     self.setCentralWidget(self.centralwidget)
-    #
-    #     # self.menubar = QtWidgets.QMenuBar(MW)
-    #     # self.menubar.setGeometry(QtCore.QRect(0, 0, 1274, 21))
-    #     # self.menubar.setObjectName("menubar")
-    #     # MW.setMenuBar(self.menubar)
-    #     # self.statusbar = QtWidgets.QStatusBar(MW)
-    #     # self.statusbar.setObjectName("statusbar")
-    #     # MW.setStatusBar(self.statusbar)
-    #
-    #     #self.GlobalstackedWidget.setCurrentIndex(0)
-    #
-    #     # MW.setWindowFlags(MW.windowFlags()| QtCore.Qt.MSWindowsFixedSizeDialogHint)
-    #     QtCore.QMetaObject.connectSlotsByName(self)
+
+    def add_personal(self):
+        print("addpersonal")
+        dlg = ImpDialofAddPersonal(self)
+        self.struct.label_name_factory.setText(self._translate("Form", client.name_db))
+        get_json = self.server.get_struct().content
+        get_json = json.loads(get_json.decode('utf-8'))
+        for post in get_json["tables"]["posts"]:
+            dlg.comboBox_2.addItem(self._translate("Dialog", post['label_post']))
+        for id_department,department in enumerate(get_json["tables"]["department"]):
+            dlg.comboBox.addItem(self._translate("Dialog", department['title']))
+
+        dlg.exec()
+
 
     def load_struct(self):
         print("load_struct")
@@ -440,7 +249,6 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
     ###############function_button##################################################
 
     def personal(self):
-        print("0")
         self.WorkWindow.stackedWidget.setCurrentIndex(0)
         pass
 
@@ -488,7 +296,7 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         self.move_struct = int(self.w / 2 - self.x_start_struct)
         self.WorkWindow.groupBox.setGeometry(QtCore.QRect(self.move_ - self.center, 30, 1011, 741))
         self.struct.main_frame.setGeometry(QtCore.QRect(self.move_struct - self.center_struct, 30, 1311, 741))
-        print(f"self.width()={self.width()}\nself.height()={self.height()}\n\n")
+
 
 class RuleForm():
 
