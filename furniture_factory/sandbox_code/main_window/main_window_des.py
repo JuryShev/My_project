@@ -362,6 +362,15 @@ class Ui_MainWindow(object):
         self.label_name_special.setAlignment(QtCore.Qt.AlignLeading|QtCore.Qt.AlignLeft|QtCore.Qt.AlignVCenter)
         self.label_name_special.setObjectName("label_name_special")
         self.VLay_educ.addWidget(self.label_name_special)
+        self.TB_AddPersonal = QtWidgets.QToolButton(self.groupBox)
+        self.TB_AddPersonal.setGeometry(QtCore.QRect(720, 417, 41, 31))
+        self.TB_AddPersonal.setStyleSheet("border:none")
+        icon = QtGui.QIcon()
+        icon.addPixmap(QtGui.QPixmap(
+            "C:\\Users\\Yura\\PycharmProjects\\pythonProject\\my_project\\furniture_factory\\GUI_designer\\icon/1800 Icon Pack [20x20]/PNG@2_green_icons/plus_mini [#1523].png"),
+                       QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.TB_AddPersonal.setIcon(icon)
+        self.TB_AddPersonal.setObjectName("toolButton")
         self.stackedWidget.addWidget(self.Search_person)
         self.page_2 = QtWidgets.QWidget()
         self.page_2.setObjectName("page_2")
@@ -490,15 +499,15 @@ class Window(QtWidgets.QMainWindow):
         pass
 
 
-# if __name__ == "__main__":
-#     import sys
-#     # app = QtWidgets.QApplication(sys.argv)
-#     # MainWindow = QtWidgets.QMainWindow()
-#     # ui = Ui_MainWindow()
-#     # ui.setupUi(MainWindow)
-#     # MainWindow.show()
-#     # sys.exit(app.exec_())
-#     app = QtWidgets.QApplication(sys.argv)
-#     w = Window()
-#     w.show()
-#     sys.exit(app.exec_())
+if __name__ == "__main__":
+    import sys
+    # app = QtWidgets.QApplication(sys.argv)
+    # MainWindow = QtWidgets.QMainWindow()
+    # ui = Ui_MainWindow()
+    # ui.setupUi(MainWindow)
+    # MainWindow.show()
+    # sys.exit(app.exec_())
+    app = QtWidgets.QApplication(sys.argv)
+    w = Window()
+    w.show()
+    sys.exit(app.exec_())
