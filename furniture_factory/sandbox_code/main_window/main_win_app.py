@@ -1,10 +1,11 @@
 from main_window_des import Ui_MainWindow
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QDialog
+from PyQt5.QtWidgets import QDialog, QFileDialog
 import my_project.furniture_factory.sandbox_code.demo_pb_in_mw as mw
 from my_project.furniture_factory.DialofAddPersonal import DialogAddPersonal
 from functools import partial
 import time
+import cv2
 from my_project.furniture_factory.client_app import ServerConnector
 import json
 import traceback
@@ -31,6 +32,24 @@ class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
     def __init__(self, parent):
         super().__init__(parent)
         self.setupUi(self)
+        self.rejected.connect(self.reject_)
+        self.TB_AddPhoto.clicked.connect(self.AddPhoto)
+        self.PersonalData={
+        "comand": 2000,
+        "user": "admin",
+        "db_comand": 1,
+        "tables": {"personal":[{"name":"Петров Иван Иванович",
+                                        "education": "ГМИ",
+                                        "number":"+7(988)-834-15-41",
+										"certification": 5,
+										"id_posts": 1,
+										"id_department":2,
+										"salaryl":50000,
+										"bonus":0,
+                                        "dir_avatar":'q'}
+                                       ]}}
+        self.PhotoPersonal=''
+
         ################asteric########################
         self.Asterisk_FamalyName = QtWidgets.QLabel(self)
         self.Asterisk_FamalyName.setEnabled(True)
@@ -81,9 +100,11 @@ class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
         self.Asterisk_NumberPhone.setStyleSheet("border-image: url(./icon/asterisk.png);")
         self.Asterisk_NumberPhone.setText("")
         self.Asterisk_NumberPhone.setObjectName("Asterisk_NumberPhone")
+        self.flag_filling=1
+        self._translate = QtCore.QCoreApplication.translate
         ################################################
     def accept(self) -> None:
-        flag_filling=1
+
         LE_list=[self.LE_Name,
                  self.LE_FatherName,
                  self.LE_FamilyName,
@@ -91,6 +112,7 @@ class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
                  self.LE_Day,
                  self.LE_BaseRate,
                  self.LE_Attestation]
+
         Asteric_list=[self.Asterisk_Name,
                       self.Asterisk_FatherName,
                       self.Asterisk_FamalyName,
@@ -104,16 +126,109 @@ class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
             Asteric_list[id].hide()
             if len(text)==0 or (text.find('+')!=-1 and len(text.replace(' ', ''))<15):
                 Asteric_list[id].show()
-                flag_filling=0
+                self.flag_filling=0
 
-
-
-
-        if flag_filling==0:
+        if self.flag_filling==0:
             print("Не все заполнено")
-        if flag_filling==1:
+        if self.flag_filling==1:
             print("все отлично")
-            pass
+            self.close()
+            self.flag_filling = 1
+            print(f"self.flag_filling={self.flag_filling}")
+
+
+    def reject_(self) -> None:
+        self.close()
+        self.flag_filling = 0
+
+
+    def find_face(self, path):
+        img=cv2.imread(path,0)
+        face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
+        faces = face_cascade.detectMultiScale(img, 1.1, 4)
+        if len(faces)>0:
+            x, y, w, h=faces[0]
+            percent=0.08
+            percent_w=0
+            percent_h=0
+            max_h, max_w = img.shape
+            if max_h<max_w:
+                dev=max_w/max_h
+                percent_h=percent*dev
+                percent_w=percent
+            elif max_h>max_w:
+                dev=max_h/max_w
+                percent_h=percent
+                percent_w=percent*dev
+            else:
+                percent_h=percent
+                percent_w=percent
+
+            x_p=0
+            w_p=0
+            y_p=0
+            h_p=0
+            if x-max_w*percent_w>0:
+                x_p = int(max_w * percent_w)
+            if x+w+max_w*percent_w<max_w:
+                w_p=int(max_w*percent_w)
+
+            if y-max_h*percent_h>0:
+                y_p = int(max_h * percent_h)
+            if y+h+max_h*percent_h<max_h:
+                h_p=int(max_h*percent_h)
+            img = cv2.imread(path)
+            face_save=img[y-y_p:y+h+h_p, x-x_p:x+w+w_p , :]
+            scale_percent=int(13500/max(face_save.shape))
+            width_res = int(face_save.shape[1] * scale_percent / 100)
+            height_res = int(face_save.shape[0] * scale_percent / 100)
+            dim = (width_res, height_res)
+            face_save = cv2.resize(face_save, dim, interpolation=cv2.INTER_AREA)
+        else:
+            face_save=-1
+        return face_save
+
+    def AddPhoto(self):
+        from io import BytesIO
+        import base64
+        from PIL import Image
+        import numpy as np
+        import pickle
+        face=None
+        buffered = BytesIO()
+        image_name=QFileDialog.getOpenFileName(self, "Openfile", "./image/", "All Files (*);;PNG files (*.png);; Jpg Files (*.jpg)")
+        if len(image_name[0])>0:
+            face=self.find_face(image_name[0])
+
+
+        if type(face)==np.ndarray:
+            face_to_json = Image.fromarray(face)
+            face_to_json.save(buffered, format="JPEG")
+            img_byte = buffered.getvalue()
+            img_base64 = base64.b64encode(img_byte)
+            self.PhotoPersonal = img_base64.decode('utf-8')
+            # ####################pikle img###################
+            # with open("img.pickle", "wb") as outfile:
+            #     # "wb" argument opens the file in binary mode
+            #     pickle.dump(img_base64, outfile)
+            # ##########bin to image##########################
+            # img = base64.b64decode(img_base64)  # Convert image data converted to base64 to original binary data# bytes
+            # img = BytesIO(img)  # _io.Converted to be handled by BytesIO pillow
+            # img = Image.open(img)
+            # img_shape = img.size
+            # face_=np.asarray(img)
+            # ################################################
+
+            height, width, channel = face.shape
+            bytesPerLine = 3 * width
+            qFace = QtGui.QImage(face.data, width, height, bytesPerLine, QtGui.QImage.Format_BGR888)
+            self.pixmap = QtGui.QPixmap(qFace)
+            self.Label_SpaceImage.setPixmap(self.pixmap)
+        elif face==-1:
+            self.Label_SpaceImage.setText(self._translate("Dialog", "Загрузите изображения\n с лицом"))
+
+
+
 
 
 class MainWindow_all_3(QtWidgets.QMainWindow):
@@ -127,7 +242,7 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         self.resized.connect(self.someFunction)
         self.WorkWindow=Ui_MainWindow()
         self.WorkWindow.setupUi(self)
-
+        self.WorkWindow.PB_serch_personal.clicked.connect(self.get_personal)
 
         self.center = int(1011 / 2)
         self.center_struct=int(1390/2)
@@ -186,16 +301,30 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
 
     def add_personal(self):
         print("addpersonal")
+        dict_post_id={}
+        dict_department_id={}
+
         dlg = ImpDialofAddPersonal(self)
         self.struct.label_name_factory.setText(self._translate("Form", client.name_db))
         get_json = self.server.get_struct().content
         get_json = json.loads(get_json.decode('utf-8'))
-        for post in get_json["tables"]["posts"]:
+        for  post in get_json["tables"]["posts"]:
             dlg.comboBox_2.addItem(self._translate("Dialog", post['label_post']))
-        for id_department,department in enumerate(get_json["tables"]["department"]):
+            dict_post_id[post['label_post']]=post['id_posts']
+        for department in get_json["tables"]["department"]:
             dlg.comboBox.addItem(self._translate("Dialog", department['title']))
-
+            dict_department_id[department['title']] = department['id_department']
         dlg.exec()
+        if dlg.flag_filling==1:
+            dlg.PersonalData["tables"]["personal"][0]["name"]=dlg.LE_FamilyName.text()+" "+dlg.LE_Name.text()+" "+dlg.LE_FatherName.text()
+            dlg.PersonalData["tables"]["personal"][0]["education"]="-"
+            dlg.PersonalData["tables"]["personal"][0]["number"]=dlg.LE_NuberPhone.text()
+            dlg.PersonalData["tables"]["personal"][0]["certification"]=int(dlg.LE_Attestation.text())
+            dlg.PersonalData["tables"]["personal"][0]["id_posts"]=dict_post_id[dlg.comboBox_2.currentText()]
+            dlg.PersonalData["tables"]["personal"][0]["id_department"]=dict_department_id[dlg.comboBox.currentText()]
+            dlg.PersonalData["tables"]["personal"][0]["salaryl"]=int(dlg.LE_BaseRate.text())
+            dlg.PersonalData["tables"]["personal"][0]["dir_avatar"]=dlg.PhotoPersonal
+            result=client.add_personal(dlg.PersonalData).content.decode("utf-8")
 
 
     def load_struct(self):
@@ -233,6 +362,23 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
             self.struct.label_error.setText(self._translate("Form", "Ошибка подключения к серверу"))
         finally:
             self.progress_bar.status_ = 'ok'
+
+    def get_personal(self):
+        import itertools
+        name_personal=self.WorkWindow.LE_serch_personal.text()
+        print(name_personal)
+        list_name=['', '', '']
+        list_name[0],list_name[1],list_name[2]=name_personal.split(" ")
+        for comb in itertools.permutations(name_personal.split(" ")):
+            print(comb)
+        Personal = {
+            "comand": 2001,
+            "user": "admin",
+            "db_comand": 1,
+            "tables": {"personal": [{"name": "Петров Иван Иванович"
+                                     }
+                                    ]}}
+        Personal["tables"]["personal"][0]["name"]=name_personal
 
     def cont_test(self):
         a = 0
