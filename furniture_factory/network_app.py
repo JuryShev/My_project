@@ -4,8 +4,9 @@ import json
 from flask import Flask, request
 from database import FurnitureDtabase
 import database
-
-
+import pickle
+import itertools
+import os
 def full_check(json_data, stand_comand:dir, name_db):
     my_db = FurnitureDtabase(name_db=name_db)
     ch_headline = check_headline(json_data, stand_comand)
@@ -96,8 +97,12 @@ def create_company(name_db):
             my_db.add_row(name_table, tuple(title), tuple(value))
     return 'ok'
 
-@app.route('/furniture_/add_personal', methods=['POST'])
+@app.route('/furniture/add_personal_<name_db>/', methods=['POST'])
 def add_personal(name_db):
+    name_avatar=''
+    path_save_avatar='./avatar/'+name_db+'/'
+    if not os.path.exists(path_save_avatar):
+        os.makedirs(path_save_avatar)
 
     stand_comand={'comand': 2000,
                   'user': 'admin',
@@ -113,10 +118,59 @@ def add_personal(name_db):
        # my_db.clear_table(name_table)
         list_rows = list_tables[name_table]
         for row in list_rows:
+            last_id=my_db.get_last_row(name_table, 'id_personal')
+            if len(last_id)==0:
+                name_avatar='avatar_1'
+            else:
+                name_avatar = 'avatar_'+str(last_id[0][0]+1)
+            avatar=row['dir_avatar']
+            name_save=path_save_avatar+name_avatar+'.pickle'
+            with open(name_save, "wb") as outfile:
+                # "wb" argument opens the file in binary mode
+                pickle.dump(avatar, outfile)
+            row['dir_avatar']=name_save
             title = list(row.keys())
             value = [row[i] for i in title]
             my_db.add_row(name_table, tuple(title), tuple(value))
     return 'ok'
+
+@app.route('/furniture/get_personal_<name_db>/', methods=['POST'])
+def get_personal(name_db):
+    result =None
+    stand_comand = {'comand': 2001,
+                    'user': 'admin',
+                    'db_comand': 1}
+    a = request.data
+    j = json.loads(a.decode('utf-8'))
+    check_error = full_check(json_data=j, stand_comand=stand_comand, name_db=name_db)
+    if check_error != 'ok':
+        return check_error
+    my_db = FurnitureDtabase(name_db=name_db)
+    list_tables = j['tables']
+    for name_table in list_tables:
+       # my_db.clear_table(name_table)
+        list_rows = list_tables[name_table]
+        for row in list_rows:
+            permutations_name=''
+            for comb in itertools.permutations(row["name"].split(" ")):
+                result=my_db.search_personal(name_db, comb)
+                if len(result)>0:
+                    for pers in result:
+                        dir_avatar=pers['dir_avatar']
+                        with open(dir_avatar, "rb") as openfile:
+                            avatar=pickle.load(openfile)
+                            pers['dir_avatar']=avatar
+                    json_send = json.dumps(result)
+                    return json_send
+                else:
+                    result= "Сотрудник с таким именем не найден"
+    return result
+
+
+
+
+
+
 
 @app.route('/furniture/add_db', methods=['POST'])
 def add_factory(comand=1111):
