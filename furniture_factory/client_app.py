@@ -24,6 +24,11 @@ class ServerConnector():
                                json=data_send)
         return result
 
+    def add_personal(self, data_send):
+        result = requests.post(f"{self.url}/furniture/add_personal_{self.name_db}/",
+                               json=data_send)
+        return result
+
     def edit_table(self, data_send):
         result = requests.post(f"{self.url}/furniture/edit_tables_{self.name_db}/",
                                json=data_send)
