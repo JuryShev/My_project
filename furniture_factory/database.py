@@ -61,6 +61,27 @@ class FurnitureDtabase:
         self.database = name_db
 
 
+
+    def get_last_row(self, name_table, name_column='*'):
+        print("start")
+        with mysql.connector.connect(
+            host=self.host,
+            user=self.user,
+            password=self.password,
+            port=self.port,
+            database=self.database
+
+        ) as connection:
+            mycursor = connection.cursor()
+            name_id='id_'+name_table
+            mysql_comand = f'SELECT {name_column} FROM {name_table} ORDER BY {name_id} DESC LIMIT 1'
+            mycursor.execute(mysql_comand)
+            last_row = mycursor.fetchall()
+        return last_row
+
+
+        #SELECT id_personal FROM with_photo.personal ORDER BY id_personal DESC LIMIT 1
+
     def add_column(self, name_table, name_column, type_data):
         print("start")
         with mysql.connector.connect(
@@ -305,6 +326,38 @@ class FurnitureDtabase:
                     mysql_comand = f"UPDATE {name_table} SET {title[n]} = {value[n]} WHERE {title[0]} = {value[0]}"
                 mycursor.execute(mysql_comand)
                 connection.commit()
+
+    def search_personal(self, name_table, name_personal):
+        with mysql.connector.connect(
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                port=self.port,
+                database=self.database
+
+        ) as connection:
+            mycursor = connection.cursor()
+            name_personal_compile=''
+            for n in name_personal:
+                name_personal_compile=name_personal_compile+" "+n
+            name_personal_compile=name_personal_compile[1:]
+
+            mysql_comand="SELECT id_personal, name, education, number, certification, salaryl, bonus, dir_avatar," \
+                    " title as 'label_department', label_post"\
+                    f" FROM {name_table}.personal" \
+                    f" INNER JOIN {name_table}.department ON department.id_department = personal.id_department"\
+                    f" INNER JOIN {name_table}.posts ON posts.id_posts = personal.id_posts"\
+                    f" WHERE personal.name LIKE '{name_personal_compile}%'"
+
+            mycursor.execute(mysql_comand)
+            count = mycursor.fetchall()
+            if len(count)>0:
+                field_names = [i[0] for i in mycursor.description]
+                for i  in range(len(count)):
+                    count[i]=dict(zip(field_names, list(count[i])))
+            return count
+
+
 
 
 
