@@ -303,7 +303,7 @@ class DialogCreatFactory(QDialog, creat_dialog):
         self.name_factory_orig = ''
         self.setWindowTitle("Название предприятия")
 
-        self.buttonBox.accepted.connect(self.accept_data)
+        self.buttonBox.accepted.connect(self.acept_data)
         self.buttonBox.rejected.connect(self.reject_data)
 
 
@@ -796,8 +796,6 @@ class mywindow(QtWidgets.QMainWindow):
         self.flagServerChange.emit(value)
 
     def btn_Creat(self):
-
-
         dlg = DialogCreatFactory(self)
         dlg.exec()
         if len(dlg.name_factory)>0:
