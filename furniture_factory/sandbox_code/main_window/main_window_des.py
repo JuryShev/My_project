@@ -261,7 +261,7 @@ class Ui_MainWindow(object):
         self.label_surname.setAlignment(QtCore.Qt.AlignBottom|QtCore.Qt.AlignHCenter)
         self.label_surname.setObjectName("label_surname")
         self.label_name = QtWidgets.QLabel(self.groupBox)
-        self.label_name.setGeometry(QtCore.QRect(414, 370, 201, 21))
+        self.label_name.setGeometry(QtCore.QRect(354, 370, 321, 21))
         font = QtGui.QFont()
         font.setFamily("Roboto")
         font.setPointSize(14)
