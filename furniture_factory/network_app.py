@@ -151,7 +151,6 @@ def get_personal(name_db):
        # my_db.clear_table(name_table)
         list_rows = list_tables[name_table]
         for row in list_rows:
-            permutations_name=''
             for comb in itertools.permutations(row["name"].split(" ")):
                 result=my_db.search_personal(name_db, comb)
                 if len(result)>0:

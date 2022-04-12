@@ -6,6 +6,11 @@ from my_project.furniture_factory.DialofAddPersonal import DialogAddPersonal
 from functools import partial
 import time
 import cv2
+from io import BytesIO
+import base64
+from PIL import Image
+import numpy as np
+import pickle
 from my_project.furniture_factory.client_app import ServerConnector
 import json
 import traceback
@@ -189,11 +194,7 @@ class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
         return face_save
 
     def AddPhoto(self):
-        from io import BytesIO
-        import base64
-        from PIL import Image
-        import numpy as np
-        import pickle
+
         face=None
         buffered = BytesIO()
         image_name=QFileDialog.getOpenFileName(self, "Openfile", "./image/", "All Files (*);;PNG files (*.png);; Jpg Files (*.jpg)")
@@ -278,6 +279,13 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         self.GlobalstackedWidget.setAutoFillBackground(False)
         self.GlobalstackedWidget.setStyleSheet("")
         self.GlobalstackedWidget.setObjectName("stackedWidget")
+        self.Personal = {
+            "comand": 2001,
+            "user": "admin",
+            "db_comand": 1,
+            "tables": {"personal": [{"name": ''
+                                     }
+                                    ]}}
 
 
         # self.menubar = QtWidgets.QMenuBar(MW)
@@ -367,18 +375,33 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         import itertools
         name_personal=self.WorkWindow.LE_serch_personal.text()
         print(name_personal)
-        list_name=['', '', '']
-        list_name[0],list_name[1],list_name[2]=name_personal.split(" ")
-        for comb in itertools.permutations(name_personal.split(" ")):
-            print(comb)
-        Personal = {
-            "comand": 2001,
-            "user": "admin",
-            "db_comand": 1,
-            "tables": {"personal": [{"name": "Петров Иван Иванович"
-                                     }
-                                    ]}}
-        Personal["tables"]["personal"][0]["name"]=name_personal
+        self.Personal["tables"]["personal"][0]["name"]=name_personal
+        person=client.get_personal(data_send=self.Personal).content
+        person=json.loads(person.decode('utf-8'))
+        if len(person)==1:
+            person=person[0]
+
+        FamilyName, Name, FatherName=person['name'].split(" ")
+        self.WorkWindow.label_surname.setText(self._translate("MainWindow", FamilyName))
+        self.WorkWindow.label_name.setText(self._translate("MainWindow", Name +' '+FatherName))
+        self.WorkWindow.label_number.setText(self._translate("MainWindow", person['number']))
+        self.WorkWindow.label_name_depart.setText(self._translate("MainWindow", person["label_department"]))
+        self.WorkWindow.label_name_post.setText(self._translate("MainWindow", person["label_post"]))
+        self.WorkWindow.label_salaryl.setText(self._translate("MainWindow", str(person["salaryl"])))
+        self.WorkWindow.label_asses_certification.setText(self._translate("MainWindow", str(person["certification"])))
+        self.WorkWindow.label_asses_bonus.setText(self._translate("MainWindow", str(person["bonus"])))
+        avatar=person["dir_avatar"]
+        img = base64.b64decode(avatar)  # Convert image data converted to base64 to original binary data# bytes
+        img = BytesIO(img)  # _io.Converted to be handled by BytesIO pillow
+        img = Image.open(img)
+        face=np.asarray(img)
+        height, width, channel = face.shape
+        bytesPerLine = 3 * width
+        qFace = QtGui.QImage(face.data, width, height, bytesPerLine, QtGui.QImage.Format_BGR888)
+        pixmap = QtGui.QPixmap(qFace)
+        self.WorkWindow.label_avatar.setPixmap(pixmap)
+
+
 
     def cont_test(self):
         a = 0

@@ -347,7 +347,7 @@ class FurnitureDtabase:
                     f" FROM {name_table}.personal" \
                     f" INNER JOIN {name_table}.department ON department.id_department = personal.id_department"\
                     f" INNER JOIN {name_table}.posts ON posts.id_posts = personal.id_posts"\
-                    f" WHERE personal.name LIKE '{name_personal_compile}%'"
+                    f" WHERE personal.name LIKE '%{name_personal_compile}%' or '{name_personal_compile}%'"
 
             mycursor.execute(mysql_comand)
             count = mycursor.fetchall()

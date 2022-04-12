@@ -59,7 +59,7 @@ class ServerConnector():
                  "db_cond":db_cond
                  }
         self.load_data(json_)
-        pass
+
 
     def load_data_cond(self):
         pass
@@ -71,3 +71,11 @@ class ServerConnector():
                                    "user": self.id_user,
                                    "db_comand": 1})
         return result
+
+    def get_personal(self, data_send):
+        result=requests.post(f"{self.url}/furniture/get_personal_{self.name_db}/",
+                      json=data_send)
+
+        return result
+
+
