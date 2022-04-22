@@ -1,4 +1,4 @@
-from main_window_des import Ui_MainWindow
+from main_window_des import Ui_MainWindow, ExploytListWidget
 from PyQt5 import QtWidgets, QtCore, QtGui
 from PyQt5.QtWidgets import QDialog, QFileDialog
 import my_project.furniture_factory.sandbox_code.demo_pb_in_mw as mw
@@ -105,11 +105,11 @@ class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
         self.Asterisk_NumberPhone.setStyleSheet("border-image: url(./icon/asterisk.png);")
         self.Asterisk_NumberPhone.setText("")
         self.Asterisk_NumberPhone.setObjectName("Asterisk_NumberPhone")
-        self.flag_filling=1
+
         self._translate = QtCore.QCoreApplication.translate
         ################################################
     def accept(self) -> None:
-
+        self.flag_filling = 1
         LE_list=[self.LE_Name,
                  self.LE_FatherName,
                  self.LE_FamilyName,
@@ -257,10 +257,15 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         self.WorkWindow.TB_structure.clicked.connect(self.inside_structure)
         self.WorkWindow.TB_search_personal.clicked.connect(self.personal)
         self.WorkWindow.TB_AddPersonal.clicked.connect(self.add_personal)
+        self.WorkWindow.TB_EditPersonal.clicked.connect(self.edit_personal)
+        self.WorkWindow.TB_RemovePersonal.clicked.connect(self.remove_personal)
+        self.WorkWindow.TB_EditPersonal.setEnabled(False)
+        self.WorkWindow.TB_RemovePersonal.setEnabled(False)
+
         self.progress_bar=mw.PopUpProgressB()
         self.threadpool = QtCore.QThreadPool()
         self.flag_one_load_struct=0
-
+        self.flag_get_personal = -1
         self.screen = QtWidgets.QDesktopWidget().screenGeometry()
         self.setObjectName("MainWindow")
         self.resize(1500, 901)
@@ -279,13 +284,20 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         self.GlobalstackedWidget.setAutoFillBackground(False)
         self.GlobalstackedWidget.setStyleSheet("")
         self.GlobalstackedWidget.setObjectName("stackedWidget")
-        self.Personal = {
+        self.PersonalDataSend = {
             "comand": 2001,
             "user": "admin",
             "db_comand": 1,
             "tables": {"personal": [{"name": ''
                                      }
                                     ]}}
+        self.PersonalDataGet={
+            "comand": 0,
+            "user": "admin",
+            "db_comand": 1,
+            "tables": {"personal": [
+                                    ]}}
+        self.NamePerson=''
 
 
         # self.menubar = QtWidgets.QMenuBar(MW)
@@ -333,6 +345,54 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
             dlg.PersonalData["tables"]["personal"][0]["salaryl"]=int(dlg.LE_BaseRate.text())
             dlg.PersonalData["tables"]["personal"][0]["dir_avatar"]=dlg.PhotoPersonal
             result=client.add_personal(dlg.PersonalData).content.decode("utf-8")
+    def edit_personal(self):
+        dict_post_id = {}
+        dict_department_id = {}
+
+        dlg = ImpDialofAddPersonal(self)
+        self.struct.label_name_factory.setText(self._translate("Form", client.name_db))
+        get_json = self.server.get_struct().content
+        get_json = json.loads(get_json.decode('utf-8'))
+        dlg.comboBox_2.addItem(self._translate("Dialog", self.PersonalDataGet["tables"]["personal"][0]["label_post"]))
+        dlg.comboBox.addItem(self._translate("Dialog", self.PersonalDataGet["tables"]["personal"][0]["label_department"]))
+
+        for  post in get_json["tables"]["posts"]:
+            if post['label_post']!= self.PersonalDataGet["tables"]["personal"][0]["label_post"]:
+                dlg.comboBox_2.addItem(self._translate("Dialog", post['label_post']))
+            dict_post_id[post['label_post']]=post['id_posts']
+        for department in get_json["tables"]["department"]:
+            if department['title']!= self.PersonalDataGet["tables"]["personal"][0]["label_department"]:
+                dlg.comboBox.addItem(self._translate("Dialog", department['title']))
+            dict_department_id[department['title']] = department['id_department']
+        FamilyName, Name, FatherName = self.PersonalDataGet["tables"]["personal"][0]['name'].split(" ")
+        dlg.LE_FamilyName.setText(self._translate("Form", FamilyName))
+        dlg.LE_Name.setText(self._translate("Form", Name))
+        dlg.LE_FatherName.setText(self._translate("Form", FatherName))
+        dlg.LE_NuberPhone.setText(self._translate("Form", self.PersonalDataGet["tables"]["personal"][0]['number']))
+        dlg.LE_Attestation.setText(self._translate("Form", str(self.PersonalDataGet["tables"]["personal"][0]['certification'])))
+        dlg.LE_BaseRate.setText(self._translate("Form", str(self.PersonalDataGet["tables"]["personal"][0]['salaryl'])))
+        avatar = self.PersonalDataGet["tables"]["personal"][0]["dir_avatar"]
+        img = base64.b64decode(avatar)  # Convert image data converted to base64 to original binary data# bytes
+        img = BytesIO(img)  # _io.Converted to be handled by BytesIO pillow
+        img = Image.open(img)
+        face = np.asarray(img)
+        height, width, channel = face.shape
+        bytesPerLine = 3 * width
+        qFace = QtGui.QImage(face.data, width, height, bytesPerLine, QtGui.QImage.Format_BGR888)
+        pixmap = QtGui.QPixmap(qFace)
+        dlg.Label_SpaceImage.setPixmap(pixmap)
+        dlg.exec()
+
+
+    def remove_personal(self):
+        person_remove={'id_personal':self.PersonalDataGet['tables']['personal'][0]['id_personal']}
+        self.PersonalDataGet['tables']['personal'].clear()
+        self.PersonalDataGet['tables']['personal'].append(person_remove)
+        self.PersonalDataGet["comand"]=1110
+        names_column_file={'personal':'dir_avatar'}
+        result=client.del_person(self.PersonalDataGet, names_column_file=names_column_file).content
+        result = result.decode('utf-8')
+        print("remove_personal=",result)
 
 
     def load_struct(self):
@@ -373,34 +433,73 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
 
     def get_personal(self):
         import itertools
-        name_personal=self.WorkWindow.LE_serch_personal.text()
-        print(name_personal)
-        self.Personal["tables"]["personal"][0]["name"]=name_personal
-        person=client.get_personal(data_send=self.Personal).content
-        person=json.loads(person.decode('utf-8'))
+        NamePerson=self.WorkWindow.LE_serch_personal.text()
+        print(NamePerson)
+        self.PersonalDataSend["tables"]["personal"][0]["name"]=NamePerson
+        person=client.get_personal(data_send=self.PersonalDataSend).content
+        person = json.loads(person.decode('utf-8'))
+        if 'error' in person:
+            print (person['error'])
+            return None
+
+        index=self.flag_get_personal
         if len(person)==1:
-            person=person[0]
+            index=0
+        elif len(person)>1:
+            person_list=ExploytListWidget()
+            for person_ in person:
+                icon=person_["dir_avatar"]
+                img = base64.b64decode(icon)  # Convert image data converted to base64 to original binary data# bytes
+                img = BytesIO(img)  # _io.Converted to be handled by BytesIO pillow
+                img = Image.open(img)
+                face=np.asarray(img)
+                face=cv2.resize(face, (80, 80))
+                height, width, channel = face.shape
+                bytesPerLine = 3 * width
+                qFace = QtGui.QImage(face.data, width, height, bytesPerLine, QtGui.QImage.Format_BGR888)
+                pixmap = QtGui.QPixmap(qFace)
+                person_list.dynamicListWidget(person_['name'], pixmap, person_["label_post"])
+            person_list.exec()
+            index=person_list.index
 
-        FamilyName, Name, FatherName=person['name'].split(" ")
-        self.WorkWindow.label_surname.setText(self._translate("MainWindow", FamilyName))
-        self.WorkWindow.label_name.setText(self._translate("MainWindow", Name +' '+FatherName))
-        self.WorkWindow.label_number.setText(self._translate("MainWindow", person['number']))
-        self.WorkWindow.label_name_depart.setText(self._translate("MainWindow", person["label_department"]))
-        self.WorkWindow.label_name_post.setText(self._translate("MainWindow", person["label_post"]))
-        self.WorkWindow.label_salaryl.setText(self._translate("MainWindow", str(person["salaryl"])))
-        self.WorkWindow.label_asses_certification.setText(self._translate("MainWindow", str(person["certification"])))
-        self.WorkWindow.label_asses_bonus.setText(self._translate("MainWindow", str(person["bonus"])))
-        avatar=person["dir_avatar"]
-        img = base64.b64decode(avatar)  # Convert image data converted to base64 to original binary data# bytes
-        img = BytesIO(img)  # _io.Converted to be handled by BytesIO pillow
-        img = Image.open(img)
-        face=np.asarray(img)
-        height, width, channel = face.shape
-        bytesPerLine = 3 * width
-        qFace = QtGui.QImage(face.data, width, height, bytesPerLine, QtGui.QImage.Format_BGR888)
-        pixmap = QtGui.QPixmap(qFace)
-        self.WorkWindow.label_avatar.setPixmap(pixmap)
+        if index!=-1:
+            person=person[index]
+            FamilyName, Name, FatherName=person['name'].split(" ")
+            self.WorkWindow.label_surname.setText(self._translate("MainWindow", FamilyName))
+            self.WorkWindow.label_name.setText(self._translate("MainWindow", Name +' '+FatherName))
+            self.WorkWindow.label_number.setText(self._translate("MainWindow", person['number']))
+            self.WorkWindow.label_name_depart.setText(self._translate("MainWindow", person["label_department"]))
+            self.WorkWindow.label_name_post.setText(self._translate("MainWindow", person["label_post"]))
+            self.WorkWindow.label_salaryl.setText(self._translate("MainWindow", str(person["salaryl"])))
+            self.WorkWindow.label_asses_certification.setText(self._translate("MainWindow", str(person["certification"])))
+            self.WorkWindow.label_asses_bonus.setText(self._translate("MainWindow", str(person["bonus"])))
+            avatar=person["dir_avatar"]
+            img = base64.b64decode(avatar)  # Convert image data converted to base64 to original binary data# bytes
+            img = BytesIO(img)  # _io.Converted to be handled by BytesIO pillow
+            img = Image.open(img)
+            face=np.asarray(img)
+            height, width, channel = face.shape
+            bytesPerLine = 3 * width
+            qFace = QtGui.QImage(face.data, width, height, bytesPerLine, QtGui.QImage.Format_BGR888)
+            pixmap = QtGui.QPixmap(qFace)
+            self.WorkWindow.label_avatar.setPixmap(pixmap)
+        self.flag_get_personal=index
+        if self.flag_get_personal>-1:
+            self.WorkWindow.TB_EditPersonal.setEnabled(True)
+            icon1 = QtGui.QIcon()
+            icon1.addPixmap(QtGui.QPixmap(
+                "C:\\Users\\Yura\\PycharmProjects\\pythonProject\\my_project\\furniture_factory\\GUI_designer\\icon/1800 Icon Pack [20x20]/PNG@2_white_icons/pen [#1320].png"),
+                            QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            self.WorkWindow.TB_EditPersonal.setIcon(icon1)
 
+            icon2 = QtGui.QIcon()
+            icon2.addPixmap(QtGui.QPixmap(
+                "C:\\Users\\Yura\\PycharmProjects\\pythonProject\\my_project\\furniture_factory\\GUI_designer\\icon/icons8-удалить-96.png"),
+                            QtGui.QIcon.Normal, QtGui.QIcon.Off)
+            self.WorkWindow.TB_RemovePersonal.setIcon(icon2)
+            self.WorkWindow.TB_RemovePersonal.setEnabled(True)
+            self.PersonalDataGet['tables']['personal'].clear()
+            self.PersonalDataGet["tables"]["personal"].append(person)
 
 
     def cont_test(self):

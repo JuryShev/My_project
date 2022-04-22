@@ -1,5 +1,5 @@
 import requests
-
+import json
 
 class ServerConnector():
     def __init__(self, id_user, adress, port):
@@ -33,8 +33,28 @@ class ServerConnector():
         result = requests.post(f"{self.url}/furniture/edit_tables_{self.name_db}/",
                                json=data_send)
         return result
+
+    def del_associated_file(self, data_send):
+        result = requests.post(f"{self.url}/furniture/del_associated_file_{self.name_db}/",
+                               json=data_send)
+        return result
+
     def del_row_table(self, data_send):
         result = requests.post(f"{self.url}/furniture/delete_row_{self.name_db}/",
+                               json=data_send)
+        return result
+    def del_person(self, data_send, names_column_file:dir ):
+
+        data_send['names_column_file']=names_column_file
+        result=self.del_associated_file( data_send).content
+        result = result.decode('utf-8')
+        if result=='ok':
+            data_send.pop('names_column_file')
+            result=self.del_row_table(data_send)
+        return result
+
+    def get_row_table(self, data_send, name_row_condition):
+        result = requests.post(f"{self.url}/furniture/get_row_{self.name_db}_{name_row_condition}/",
                                json=data_send)
         return result
 

@@ -79,7 +79,22 @@ class FurnitureDtabase:
             last_row = mycursor.fetchall()
         return last_row
 
+    def open_dir_associated_file(self, row, name_table, names_column_file):
+        id_column= list(row.keys())[0]
+        id=row[id_column]
+        with mysql.connector.connect(
+            host=self.host,
+            user=self.user,
+            password=self.password,
+            port=self.port,
+            database=self.database
 
+        ) as connection:
+            mycursor = connection.cursor()
+            mysql_comand=f'SELECT {names_column_file} FROM {name_table} WHERE {id_column}={id} '
+            mycursor.execute(mysql_comand)
+            dir_file=mycursor.fetchall()
+            return dir_file[0][0]
         #SELECT id_personal FROM with_photo.personal ORDER BY id_personal DESC LIMIT 1
 
     def add_column(self, name_table, name_column, type_data):
@@ -293,7 +308,30 @@ class FurnitureDtabase:
 
         return data
 
-    def get_name_column(self, name_table):
+    def get_name_column(self, name_table, format_result='all'):
+        with mysql.connector.connect(
+                host=self.host,
+                user=self.user,
+                password=self.password,
+                port=self.port,
+                database=self.database
+
+        ) as connection:
+            field_names=None
+            mycursor = connection.cursor()
+            mysql_comand= f'SHOW COLUMNS from {name_table}'
+            mycursor.execute(mysql_comand)
+            name_column=mycursor.fetchall()
+
+            if format_result=='all':
+                field_names=name_column
+            elif format_result=='names':
+                field_names = [i[0] for i in name_column]
+
+        return field_names
+
+##############доделать###############################################
+    def get_row(self, name_db,name_table, name_row, name_condition):
         with mysql.connector.connect(
                 host=self.host,
                 user=self.user,
@@ -303,11 +341,18 @@ class FurnitureDtabase:
 
         ) as connection:
             mycursor = connection.cursor()
-            mysql_comand= f'SHOW COLUMNS from {name_table}'
-            mycursor.execute(mysql_comand)
-            name_column=mycursor.fetchall()
+            mysql_comand = "SELECT * "\
+                           f" FROM {name_db}.{name_table}" \
+                           f" WHERE {name_table}.{name_row} = '{name_condition}'"
 
-        return name_column
+            mycursor.execute(mysql_comand)
+            count = mycursor.fetchall()
+            if len(count)>0:
+                field_names = [i[0] for i in mycursor.description]
+                for i  in range(len(count)):
+                    count[i]=dict(zip(field_names, list(count[i])))
+            return count
+#############################################################################
 
     def edit_row(self, name_table, title: tuple, value : tuple):
         with mysql.connector.connect(

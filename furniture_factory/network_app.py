@@ -20,9 +20,15 @@ def full_check(json_data, stand_comand:dir, name_db):
     if ch_table == False:
         return 'Check table False'
 
+
     for name_table in tables_list:
-        type_columns = my_db.get_type(name_table)
+        list_column = my_db.get_name_column(name_table, format_result='names')
         data_table = tables[name_table]
+        ch_name_column=check_column(list_column, data_table)
+        if ch_name_column!='ok':
+            return f'column named {ch_name_column} does not exist in table {name_table}'
+        type_columns = my_db.get_type(name_table)
+
         ch_type = check_type(data_table, name_table, type_columns)
         if ch_type != True:
             return 'Type error:' + ch_type
@@ -43,6 +49,17 @@ def check_headline(data, stand_comand:dict):
         print(f"command {data['db_comand']} does not allow adding data")
         return f"command {data['db_comand']} does not allow adding data"
     return flag_check
+
+def check_column(get_columns,rows):
+
+    for row in rows:
+        json_columns=list(row.keys())
+        for json_column in json_columns:
+            if (json_column in get_columns)==False:
+                return json_column
+    return  'ok'
+
+
 
 def check_type(data, name_table, type_columns):
 
@@ -162,14 +179,9 @@ def get_personal(name_db):
                     json_send = json.dumps(result)
                     return json_send
                 else:
-                    result= "Сотрудник с таким именем не найден"
-    return result
-
-
-
-
-
-
+                    result= {"error":"Сотрудник с таким именем не найден"}
+    json_send = json.dumps(result)
+    return json_send
 
 @app.route('/furniture/add_db', methods=['POST'])
 def add_factory(comand=1111):
@@ -267,6 +279,28 @@ def del_row_tables(name_db):
             my_db.del_row(name_table, tuple(title), tuple(value))
     return 'ok'
 
+@app.route('/furniture/del_associated_file_<name_db>/', methods=['POST'])
+def del_associated_file(name_db):
+    stand_comand = {'comand': 1110,
+                    'user': 'admin',
+                    'db_comand': 1,
+                    }
+    my_db = FurnitureDtabase(name_db=name_db)
+    a = request.data
+    j = json.loads(a.decode('utf-8'))
+    check_error = full_check(json_data=j, stand_comand=stand_comand, name_db=name_db)
+    if check_error != 'ok':
+        return check_error
+    names_column_file=j['names_column_file']
+    list_tables = j['tables']
+    for name_table in list_tables:
+        list_rows = list_tables[name_table]
+        for row in list_rows:
+            dir_associated_file=my_db.open_dir_associated_file(row, name_table,names_column_file[name_table])
+            os.remove(dir_associated_file)
+
+    return 'ok'
+
 @app.route('/furniture/add_row_<name_db>/', methods=['POST'])
 def add_row_tables(name_db):
     stand_comand = {'comand': 1110,
@@ -287,6 +321,27 @@ def add_row_tables(name_db):
             value = [row[i] for i in title]
             my_db.add_row(name_table, tuple(title), tuple(value))
     return 'ok'
+#############доработать(не понятно как собирать если по result["tables"] если по одной таблице идет несколько условий)
+@app.route('/furniture/get_row_<name_db>_<column_condition>/', methods=['POST'])
+def get_row_tables(name_db, column_condition):
+    stand_comand = {'comand': 2001,
+                    'user': 'admin',
+                    'db_comand': 1,
+                    }
+    result={"tables":{}}
+    my_db = FurnitureDtabase(name_db=name_db)
+    a = request.data
+    j = json.loads(a.decode('utf-8'))
+    check_error = full_check(json_data=j, stand_comand=stand_comand, name_db=name_db)
+    if check_error != 'ok':
+        return check_error
+    list_tables = j['tables']
+    for name_table in list_tables:
+        list_rows = list_tables[name_table]
+        result["tables"][name_table]=[]
+        for row in list_rows:
+            result_row=my_db.get_row(name_db, name_table, column_condition, row[column_condition])
+            result["tables"][name_table]=result_row
 
 @app.route('/furniture/get_databases/', methods=['POST'])
 def get_databases():
