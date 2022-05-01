@@ -363,7 +363,7 @@ class Ui_MainWindow(object):
         self.label_name_special.setObjectName("label_name_special")
         self.VLay_educ.addWidget(self.label_name_special)
         self.TB_AddPersonal = QtWidgets.QToolButton(self.groupBox)
-        self.TB_AddPersonal.setGeometry(QtCore.QRect(720, 417, 41, 31))
+        self.TB_AddPersonal.setGeometry(QtCore.QRect(700, 350, 41, 31))
         self.TB_AddPersonal.setStyleSheet("border:none")
         icon = QtGui.QIcon()
         icon.addPixmap(QtGui.QPixmap(
@@ -371,6 +371,21 @@ class Ui_MainWindow(object):
                        QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.TB_AddPersonal.setIcon(icon)
         self.TB_AddPersonal.setObjectName("toolButton")
+        self.TB_EditPersonal = QtWidgets.QToolButton(self.groupBox)
+        self.TB_EditPersonal.setGeometry(QtCore.QRect(700, 380, 41, 31))
+        self.TB_EditPersonal.setStyleSheet("border:none")
+        icon1 = QtGui.QIcon()
+        icon1.addPixmap(QtGui.QPixmap("C:\\Users\\Yura\\PycharmProjects\\pythonProject\\my_project\\furniture_factory\\GUI_designer\\icon/1800 Icon Pack [20x20]/PNG@2_white_icons/pen_inactive [#1320].png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.TB_EditPersonal.setIcon(icon1)
+        self.TB_EditPersonal.setObjectName("TB_edit")
+        self.TB_RemovePersonal = QtWidgets.QToolButton(self.groupBox)
+        self.TB_RemovePersonal.setGeometry(QtCore.QRect(700, 410, 41, 31))
+        self.TB_RemovePersonal.setStyleSheet("border:none")
+        icon2 = QtGui.QIcon()
+        icon2.addPixmap(QtGui.QPixmap("C:\\Users\\Yura\\PycharmProjects\\pythonProject\\my_project\\furniture_factory\\GUI_designer\\icon/icons8-удалить-96_inactive.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        self.TB_RemovePersonal.setIcon(icon2)
+        self.TB_RemovePersonal.setIconSize(QtCore.QSize(20, 20))
+        self.TB_RemovePersonal.setObjectName("TB_remove")
         self.stackedWidget.addWidget(self.Search_person)
         self.page_2 = QtWidgets.QWidget()
         self.page_2.setObjectName("page_2")
@@ -465,6 +480,118 @@ class Ui_MainWindow(object):
         self.TB_project.setText(_translate("MainWindow", "Проекты"))
         self.TB_structure.setText(_translate("MainWindow", "Структура"))
 
+############################динамический список для нескольких сотрудников##############
+class QCustomQWidget (QtWidgets.QWidget):
+    def __init__ (self, parent = None):
+        super(QCustomQWidget, self).__init__(parent)
+        self.textQVBoxLayout = QtWidgets.QVBoxLayout()
+        self.textUpQLabel    = QtWidgets.QLabel()
+        self.textDownQLabel  = QtWidgets.QLabel()
+        self.textDownQLabel.setStyleSheet("background-color: rgb(145, 158, 208);")
+        self.textUpQLabel.setStyleSheet("background-color: rgb(145, 158, 208);")
+        self.textQVBoxLayout.addWidget(self.textUpQLabel)
+        self.textQVBoxLayout.addWidget(self.textDownQLabel)
+        font = QtGui.QFont()
+        font.setFamily("Roboto")
+        font.setPointSize(9)
+        font.setBold(True)
+        self.textUpQLabel.setFont(font)
+        self.textDownQLabel.setFont(font)
+        self.allQHBoxLayout     = QtWidgets.QHBoxLayout()
+        self.file_iconQLabel    = QtWidgets.QLabel()
+        self.capture_iconQLabel = QtWidgets.QLabel()
+        self.file_iconQLabel.setMinimumSize(80, 80)
+        self.file_iconQLabel.setMaximumSize(80, 80)
+        self.allQHBoxLayout.addWidget(self.file_iconQLabel, 0)
+        self.allQHBoxLayout.addLayout(self.textQVBoxLayout, 1)
+        self.setLayout(self.allQHBoxLayout)
+
+
+    def setTextUp (self, text):
+        self.textUpQLabel.setText("  "+text)
+
+    def setTextDown (self, text):
+        self.textDownQLabel.setText("  "+text)
+
+    def setFileIcon (self, imagePath):
+        self.file_iconQLabel.setPixmap(QtGui.QPixmap(imagePath))
+
+    def setCaptureIcon (self, imagePath):
+        self.capture_iconQLabel.setPixmap(QtGui.QPixmap(imagePath))
+
+
+from PyQt5.QtCore import QTimer
+
+class ExploytListWidget (QtWidgets.QDialog):
+
+    def __init__ (self):
+        super(ExploytListWidget, self).__init__()
+        self.setObjectName("Dialog")
+        self.resize(522, 491)
+        self.setStyleSheet("background-color: rgb(74, 80, 106);")
+        self.label = QtWidgets.QLabel(self)
+        self.label.setGeometry(QtCore.QRect(167, 10, 181, 20))
+        self.index = 1
+        self.myQListWidget = QtWidgets.QListWidget(self)
+        self.myQListWidget.setGeometry(QtCore.QRect(0, 40, 521, 451))
+        #self.myQListWidget.setStyleSheet("background-color: rgb(145, 158, 208);")selection-color: white; show-decoration-selected: 1;selection-background-color: #0068d9;
+        self.myQListWidget.setObjectName("listWidget")
+        style = """QListView {    
+}
+
+
+QListView::item:selected:active:!hover{
+    background-color: rgb(211, 211, 211); color: white;
+}
+
+QListView::item:!selected:hover{
+    background-color: rgb(195, 195, 195); color: white;
+}"""
+        self.myQListWidget.setStyleSheet(style)
+        font = QtGui.QFont()
+        font.setFamily("Roboto")
+        font.setPointSize(12)
+        self.label.setStyleSheet("color: rgb(255, 255, 255);")
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.label.setObjectName("label")
+        #self.setCentralWidget(self.myQListWidget)
+        self.myQListWidget.itemDoubleClicked.connect(self.extract_index)
+        self.index=-1
+        self.retranslateUi()
+        QtCore.QMetaObject.connectSlotsByName(self)
+
+        self.flag_reject=0
+    # def closeEvent(self, event):
+    #     # do stuff
+    #     if self.flag_reject==0:
+    #         self.flag_reject=1
+    #         event.accept()  # let the window close
+    #     else:
+    #         event.ignore()
+
+    def retranslateUi(self):
+        _translate = QtCore.QCoreApplication.translate
+        self.setWindowTitle(_translate("Dialog", "Dialog"))
+        self.label.setText(_translate("Dialog", "Выберите сотрудника"))
+
+
+    def dynamicListWidget(self, name, file_icon, post):
+
+            myQCustomQWidget = QCustomQWidget()
+            myQCustomQWidget.setTextUp(post)
+            myQCustomQWidget.setTextDown(name)
+            myQCustomQWidget.setFileIcon(file_icon)
+            myQListWidgetItem = QtWidgets.QListWidgetItem(self.myQListWidget)
+            myQListWidgetItem.setSizeHint(myQCustomQWidget.sizeHint())
+            self.myQListWidget.addItem(myQListWidgetItem)
+            self.myQListWidget.setItemWidget(myQListWidgetItem, myQCustomQWidget)
+
+
+    def extract_index(self):
+        self.index=self.myQListWidget.currentIndex().row()
+        self.close()
+
+
 class Window(QtWidgets.QMainWindow):
     resized = QtCore.pyqtSignal()
     def  __init__(self, parent=None):
@@ -507,7 +634,12 @@ if __name__ == "__main__":
     # ui.setupUi(MainWindow)
     # MainWindow.show()
     # sys.exit(app.exec_())
-    app = QtWidgets.QApplication(sys.argv)
-    w = Window()
-    w.show()
+    # app = QtWidgets.QApplication(sys.argv)
+    # w = Window()
+    # w.show()
+    # sys.exit(app.exec_())
+
+    app  = QtWidgets.QApplication([])
+    window = ExploytListWidget()
+    window.show()
     sys.exit(app.exec_())

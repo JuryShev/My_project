@@ -243,6 +243,7 @@ def set_edit_tables(name_db):
                     'user': 'admin',
                     'db_comand': 1,
                     }
+
     my_db = FurnitureDtabase(name_db=name_db)
     a = request.data
     j = json.loads(a.decode('utf-8'))
@@ -298,6 +299,30 @@ def del_associated_file(name_db):
         for row in list_rows:
             dir_associated_file=my_db.open_dir_associated_file(row, name_table,names_column_file[name_table])
             os.remove(dir_associated_file)
+
+    return 'ok'
+@app.route('/furniture/edit_associated_file_<name_db>/', methods=['POST'])
+def edit_associated_file(name_db):
+    stand_comand = {'comand': 1110,
+                    'user': 'admin',
+                    'db_comand': 1,
+                    }
+    my_db = FurnitureDtabase(name_db=name_db)
+    a = request.data
+    j = json.loads(a.decode('utf-8'))
+    check_error = full_check(json_data=j, stand_comand=stand_comand, name_db=name_db)
+    if check_error != 'ok':
+        return check_error
+    names_column_file=j['names_column_file']
+    list_tables = j['tables']
+    for name_table in list_tables:
+        list_rows = list_tables[name_table]
+        for row in list_rows:
+            dir_associated_file=my_db.open_dir_associated_file(row, name_table,names_column_file[name_table])
+            with open(dir_associated_file, "wb") as outfile:
+                # "wb" argument opens the file in binary mode
+                pickle.dump(row[names_column_file[name_table]], outfile)
+
 
     return 'ok'
 

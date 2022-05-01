@@ -388,7 +388,7 @@ class FurnitureDtabase:
             name_personal_compile=name_personal_compile[1:]
 
             mysql_comand="SELECT id_personal, name, education, number, certification, salaryl, bonus, dir_avatar," \
-                    " title as 'label_department', label_post"\
+                    " title as 'id_department', label_post as 'id_posts'"\
                     f" FROM {name_table}.personal" \
                     f" INNER JOIN {name_table}.department ON department.id_department = personal.id_department"\
                     f" INNER JOIN {name_table}.posts ON posts.id_posts = personal.id_posts"\

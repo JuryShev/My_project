@@ -1,8 +1,10 @@
 from main_window_des import Ui_MainWindow, ExploytListWidget
 from PyQt5 import QtWidgets, QtCore, QtGui
-from PyQt5.QtWidgets import QDialog, QFileDialog
+from PyQt5.QtWidgets import QDialog, QFileDialog, QMessageBox, qApp
 import my_project.furniture_factory.sandbox_code.demo_pb_in_mw as mw
 from my_project.furniture_factory.DialofAddPersonal import DialogAddPersonal
+from my_project.furniture_factory.MassageBox import MassageBox
+from my_project.furniture_factory.DialogCalendar import DialogCalendar
 from functools import partial
 import time
 import cv2
@@ -33,11 +35,24 @@ def start_process(progress_bar, self=None):
     progress_bar.show()
 
 
+class ImpDialogCalendar(QDialog, DialogCalendar):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setupUi(self)
+        self.flag_choose = ''
+        self.PB_OK.clicked.connect(self.accept)
+        self.BirthDay = None
+
+    def accept(self):
+        self.flag_choose = 'ok'
+        self.close()
+
 class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
     def __init__(self, parent):
         super().__init__(parent)
         self.setupUi(self)
         self.rejected.connect(self.reject_)
+        self.TB_calendar.clicked.connect(self.EditCalendar)
         self.TB_AddPhoto.clicked.connect(self.AddPhoto)
         self.PersonalData={
         "comand": 2000,
@@ -108,6 +123,29 @@ class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
 
         self._translate = QtCore.QCoreApplication.translate
         ################################################
+    def EditCalendar(self):
+        month={1:'январь',
+                2:'февраль',
+                3:'март',
+                4:'апрель',
+                5:'май',
+                6:'июнь',
+                7:'июль',
+                8:'август',
+                9:'сентябрь',
+                10:'октябрь',
+                11:'ноябрь',
+                12:'декабрь'}
+        calendar=ImpDialogCalendar(self)
+        calendar.exec()
+        calendar.BirthDay=calendar.calendarWidget.selectedDate()
+        a=calendar.BirthDay
+        self.LE_Day.setText(self._translate("Dialog", str(calendar.BirthDay.day())))
+        self.LE_month.setText(self._translate("Dialog", month[calendar.BirthDay. month()]))
+        self.LE_year.setText(self._translate("Dialog", str(calendar.BirthDay.year())))
+        print(a)
+
+
     def accept(self) -> None:
         self.flag_filling = 1
         LE_list=[self.LE_Name,
@@ -194,13 +232,11 @@ class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
         return face_save
 
     def AddPhoto(self):
-
         face=None
         buffered = BytesIO()
         image_name=QFileDialog.getOpenFileName(self, "Openfile", "./image/", "All Files (*);;PNG files (*.png);; Jpg Files (*.jpg)")
         if len(image_name[0])>0:
             face=self.find_face(image_name[0])
-
 
         if type(face)==np.ndarray:
             face_to_json = Image.fromarray(face)
@@ -208,18 +244,6 @@ class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
             img_byte = buffered.getvalue()
             img_base64 = base64.b64encode(img_byte)
             self.PhotoPersonal = img_base64.decode('utf-8')
-            # ####################pikle img###################
-            # with open("img.pickle", "wb") as outfile:
-            #     # "wb" argument opens the file in binary mode
-            #     pickle.dump(img_base64, outfile)
-            # ##########bin to image##########################
-            # img = base64.b64decode(img_base64)  # Convert image data converted to base64 to original binary data# bytes
-            # img = BytesIO(img)  # _io.Converted to be handled by BytesIO pillow
-            # img = Image.open(img)
-            # img_shape = img.size
-            # face_=np.asarray(img)
-            # ################################################
-
             height, width, channel = face.shape
             bytesPerLine = 3 * width
             qFace = QtGui.QImage(face.data, width, height, bytesPerLine, QtGui.QImage.Format_BGR888)
@@ -228,6 +252,16 @@ class ImpDialofAddPersonal(QDialog, DialogAddPersonal):
         elif face==-1:
             self.Label_SpaceImage.setText(self._translate("Dialog", "Загрузите изображения\n с лицом"))
 
+class ImpMassageBox(QDialog, MassageBox):
+    def __init__(self, parent):
+        super().__init__(parent)
+        self.setupUi(self)
+        self.flag_choose=''
+        self.PB_OK_second.clicked.connect(self.accept)
+
+    def accept(self):
+        self.flag_choose='ok'
+        self.close()
 
 
 
@@ -236,6 +270,9 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
     resized = QtCore.pyqtSignal()
 
     def __init__(self, client, parent=None):
+        qApp.setStyleSheet("QMessageBox QPushButton {color: rgb(255, 255, 255);}"
+                           " QMessageBox QPushButton {background-color: rgb(145, 158, 208);}"
+                            "QMessageBox QLabel {color: rgb(255, 255, 255);}")
         self._translate = QtCore.QCoreApplication.translate
         super(MainWindow_all_3, self).__init__(parent=parent)
         self.x_start = 0
@@ -243,7 +280,7 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         self.resized.connect(self.someFunction)
         self.WorkWindow=Ui_MainWindow()
         self.WorkWindow.setupUi(self)
-        self.WorkWindow.PB_serch_personal.clicked.connect(self.get_personal)
+
 
         self.center = int(1011 / 2)
         self.center_struct=int(1390/2)
@@ -257,6 +294,7 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         self.WorkWindow.TB_structure.clicked.connect(self.inside_structure)
         self.WorkWindow.TB_search_personal.clicked.connect(self.personal)
         self.WorkWindow.TB_AddPersonal.clicked.connect(self.add_personal)
+        self.WorkWindow.PB_serch_personal.clicked.connect(self.search_personal)
         self.WorkWindow.TB_EditPersonal.clicked.connect(self.edit_personal)
         self.WorkWindow.TB_RemovePersonal.clicked.connect(self.remove_personal)
         self.WorkWindow.TB_EditPersonal.setEnabled(False)
@@ -298,7 +336,7 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
             "tables": {"personal": [
                                     ]}}
         self.NamePerson=''
-
+        self.MassageBox_=''
 
         # self.menubar = QtWidgets.QMenuBar(MW)
         # self.menubar.setGeometry(QtCore.QRect(0, 0, 1274, 21))
@@ -344,26 +382,51 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
             dlg.PersonalData["tables"]["personal"][0]["id_department"]=dict_department_id[dlg.comboBox.currentText()]
             dlg.PersonalData["tables"]["personal"][0]["salaryl"]=int(dlg.LE_BaseRate.text())
             dlg.PersonalData["tables"]["personal"][0]["dir_avatar"]=dlg.PhotoPersonal
-            result=client.add_personal(dlg.PersonalData).content.decode("utf-8")
+            answer_server=client.add_personal(dlg.PersonalData).content.decode("utf-8")
+            if answer_server == 'ok':
+                massage = ImpMassageBox(self)
+                massage.PB_OK_Canel.hide()
+                massage.Label_message.setText(self._translate("Dialog", "   Сотрудник успешно добавлен"))
+                massage.label_2.setStyleSheet("image: url(./icon/done_mini [#1484].png);")
+                massage.exec()
+
+
     def edit_personal(self):
         dict_post_id = {}
         dict_department_id = {}
-
+        PersonalDataEdit = {
+            "tables": {"personal": [{"id_personal": self.PersonalDataGet["tables"]["personal"][0]["id_personal"],
+                                     "name": "Петров Иван Иванович",
+                                     "education": "ГМИ",
+                                     "number": "+7(988)-834-15-41",
+                                     "certification": 5,
+                                     "id_posts": 1,
+                                     "id_department": 2,
+                                     "salaryl": 50000,
+                                     "bonus": 0,
+                                     "dir_avatar": self.PersonalDataGet["tables"]["personal"][0]["dir_avatar"]}
+                                    ]}}
+        answer_server=''
+        name_column_file={'personal':'dir_avatar'}
         dlg = ImpDialofAddPersonal(self)
         self.struct.label_name_factory.setText(self._translate("Form", client.name_db))
         get_json = self.server.get_struct().content
         get_json = json.loads(get_json.decode('utf-8'))
-        dlg.comboBox_2.addItem(self._translate("Dialog", self.PersonalDataGet["tables"]["personal"][0]["label_post"]))
-        dlg.comboBox.addItem(self._translate("Dialog", self.PersonalDataGet["tables"]["personal"][0]["label_department"]))
+        dlg.comboBox_2.addItem(self._translate("Dialog", self.PersonalDataGet["tables"]["personal"][0]["id_posts"]))
+        dlg.comboBox.addItem(self._translate("Dialog", self.PersonalDataGet["tables"]["personal"][0]["id_department"]))
 
-        for  post in get_json["tables"]["posts"]:
-            if post['label_post']!= self.PersonalDataGet["tables"]["personal"][0]["label_post"]:
+        for post in get_json["tables"]["posts"]:
+            if post['label_post']!= self.PersonalDataGet["tables"]["personal"][0]["id_posts"]:
                 dlg.comboBox_2.addItem(self._translate("Dialog", post['label_post']))
             dict_post_id[post['label_post']]=post['id_posts']
         for department in get_json["tables"]["department"]:
-            if department['title']!= self.PersonalDataGet["tables"]["personal"][0]["label_department"]:
+            if department['title']!= self.PersonalDataGet["tables"]["personal"][0]["id_department"]:
                 dlg.comboBox.addItem(self._translate("Dialog", department['title']))
             dict_department_id[department['title']] = department['id_department']
+
+        self.PersonalDataGet["tables"]["personal"][0]["id_department"]=dict_department_id[self.PersonalDataGet["tables"]["personal"][0]["id_department"]]
+        self.PersonalDataGet["tables"]["personal"][0]["id_posts"] = dict_post_id[self.PersonalDataGet["tables"]["personal"][0]["id_posts"]]
+
         FamilyName, Name, FatherName = self.PersonalDataGet["tables"]["personal"][0]['name'].split(" ")
         dlg.LE_FamilyName.setText(self._translate("Form", FamilyName))
         dlg.LE_Name.setText(self._translate("Form", Name))
@@ -372,6 +435,7 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         dlg.LE_Attestation.setText(self._translate("Form", str(self.PersonalDataGet["tables"]["personal"][0]['certification'])))
         dlg.LE_BaseRate.setText(self._translate("Form", str(self.PersonalDataGet["tables"]["personal"][0]['salaryl'])))
         avatar = self.PersonalDataGet["tables"]["personal"][0]["dir_avatar"]
+
         img = base64.b64decode(avatar)  # Convert image data converted to base64 to original binary data# bytes
         img = BytesIO(img)  # _io.Converted to be handled by BytesIO pillow
         img = Image.open(img)
@@ -382,18 +446,97 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         pixmap = QtGui.QPixmap(qFace)
         dlg.Label_SpaceImage.setPixmap(pixmap)
         dlg.exec()
+        if dlg.flag_filling == 1:
+            PersonalDataEdit["tables"]["personal"][0]["name"] = dlg.LE_FamilyName.text() + " " + dlg.LE_Name.text() + " " + dlg.LE_FatherName.text()
+            PersonalDataEdit["tables"]["personal"][0]["education"] = "-"
+            PersonalDataEdit["tables"]["personal"][0]["number"] = dlg.LE_NuberPhone.text()
+            PersonalDataEdit["tables"]["personal"][0]["certification"] = int(dlg.LE_Attestation.text())
+            PersonalDataEdit["tables"]["personal"][0]["id_posts"] = dict_post_id[dlg.comboBox_2.currentText()]
+            PersonalDataEdit["tables"]["personal"][0]["id_department"] = dict_department_id[dlg.comboBox.currentText()]
+            PersonalDataEdit["tables"]["personal"][0]["salaryl"] = int(dlg.LE_BaseRate.text())
+            if len(dlg.PhotoPersonal)>0:
+                PersonalDataEdit["tables"]["personal"][0]["dir_avatar"] = dlg.PhotoPersonal
 
+            value_edit_list = []
+            value_list_copy = PersonalDataEdit["tables"]["personal"]
+            value_list = self.PersonalDataGet["tables"]["personal"]
+
+            for v in range(len(value_list)):
+                v_keys = list(value_list[v].keys())
+                equal = value_list[v] == value_list_copy[v]  # проверка на редактирование
+                value_edit_dict = {}
+                if equal == False:
+                    value_edit_dict[v_keys[0]] = value_list[v][v_keys[0]]
+                    for v_key in v_keys:
+                        v_orig = value_list[v][v_key]
+                        v_copy = value_list_copy[v][v_key]
+                        if v_orig != v_copy:
+                            value_edit_dict[v_key] = v_copy
+                if len(value_edit_dict.keys()) > 0:
+                    value_edit_list.append(value_edit_dict)
+            if len(value_edit_list) > 0:
+                massage=ImpMassageBox(self)
+                massage.PB_OK_second.hide()
+                massage.exec()
+                if massage.flag_choose=='ok':
+                    dlg.PersonalData["tables"]["personal"] = value_edit_list
+                    dlg.PersonalData["comand"]=1110
+                    answer_server = client.edit_person(data_send=dlg.PersonalData, name_column_file=name_column_file)
+
+        if answer_server=='ok':
+            print("Профиль работника отредактирован")
+            massage=ImpMassageBox(self)
+            massage.PB_OK_Canel.hide()
+            massage.Label_message.setText(self._translate("Dialog", "Профиль успешно изменен"))
+            massage.label_2.setStyleSheet("image: url(./icon/done_mini [#1484].png);")
+            massage.exec()
+            self.get_personal(PersonalDataEdit["tables"]["personal"][0]["name"])
+        else:
+            self.PersonalDataGet["tables"]["personal"][0]["id_posts"] = dlg.comboBox_2.currentText()
+            self.PersonalDataGet["tables"]["personal"][0]["id_department"] =dlg.comboBox.currentText()
 
     def remove_personal(self):
-        person_remove={'id_personal':self.PersonalDataGet['tables']['personal'][0]['id_personal']}
-        self.PersonalDataGet['tables']['personal'].clear()
-        self.PersonalDataGet['tables']['personal'].append(person_remove)
-        self.PersonalDataGet["comand"]=1110
-        names_column_file={'personal':'dir_avatar'}
-        result=client.del_person(self.PersonalDataGet, names_column_file=names_column_file).content
-        result = result.decode('utf-8')
-        print("remove_personal=",result)
 
+        names_column_file={'personal':'dir_avatar'}
+        massage = ImpMassageBox(self)
+        massage.PB_OK_second.hide()
+        massage.Label_message.setText(self._translate("Dialog", "       Действительно хотите удалить профиль?"))
+        massage.exec()
+        if massage.flag_choose == 'ok':
+            person_remove = {'id_personal': self.PersonalDataGet['tables']['personal'][0]['id_personal']}
+            self.PersonalDataGet['tables']['personal'].clear()
+            self.PersonalDataGet['tables']['personal'].append(person_remove)
+            self.PersonalDataGet["comand"] = 1110
+            answer_server=client.del_person(self.PersonalDataGet, names_column_file=names_column_file).content
+            answer_server = answer_server.decode('utf-8')
+            print("remove_personal=",answer_server)
+            if answer_server == 'ok':
+                massage.PB_OK_Canel.hide()
+                massage.PB_OK_second.show()
+                massage.Label_message.setText(self._translate("Dialog", "Профиль успешно удален"))
+                massage.label_2.setStyleSheet("image: url(./icon/done_mini [#1484].png);")
+                massage.exec()
+                self.WorkWindow.label_surname.setText(self._translate("MainWindow", ''))
+                self.WorkWindow.label_name.setText(self._translate("MainWindow",''))
+                self.WorkWindow.label_number.setText(self._translate("MainWindow", ''))
+                self.WorkWindow.label_name_depart.setText(self._translate("MainWindow", ''))
+                self.WorkWindow.label_name_post.setText(self._translate("MainWindow", ''))
+                self.WorkWindow.label_salaryl.setText(self._translate("MainWindow", ''))
+                self.WorkWindow.label_asses_certification.setText(self._translate("MainWindow", ''))
+                self.WorkWindow.label_asses_bonus.setText(self._translate("MainWindow", ''))
+                face=cv2.imread('./icon/silhouette_icon128x128.png')
+                height, width, channel = face.shape
+                bytesPerLine = 3 * width
+                qFace = QtGui.QImage(face.data, width, height, bytesPerLine, QtGui.QImage.Format_BGR888)
+                pixmap = QtGui.QPixmap(qFace)
+                self.WorkWindow.label_avatar.setPixmap(pixmap)
+                icon1 = QtGui.QIcon()
+                icon1.addPixmap(QtGui.QPixmap(
+                    "C:\\Users\\Yura\\PycharmProjects\\pythonProject\\my_project\\furniture_factory\\GUI_designer\\icon/1800 Icon Pack [20x20]/PNG@2_white_icons/pen_inactive [#1320].png"),
+                    QtGui.QIcon.Normal, QtGui.QIcon.Off)
+                self.WorkWindow.TB_EditPersonal.setIcon(icon1)
+                self.WorkWindow.TB_EditPersonal.setEnabled(False)
+                self.WorkWindow.TB_RemovePersonal.setEnabled(False)
 
     def load_struct(self):
         print("load_struct")
@@ -431,14 +574,24 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
         finally:
             self.progress_bar.status_ = 'ok'
 
-    def get_personal(self):
+    def search_personal(self):
+        NamePerson = self.WorkWindow.LE_serch_personal.text()
+        self.get_personal(NamePerson)
+
+    def get_personal(self, NamePerson):
         import itertools
-        NamePerson=self.WorkWindow.LE_serch_personal.text()
+
         print(NamePerson)
         self.PersonalDataSend["tables"]["personal"][0]["name"]=NamePerson
         person=client.get_personal(data_send=self.PersonalDataSend).content
         person = json.loads(person.decode('utf-8'))
         if 'error' in person:
+            massage = ImpMassageBox(self)
+            massage.PB_OK_Canel.hide()
+            massage.PB_OK_second.show()
+            massage.Label_message.setText(self._translate("Dialog", "   "+person['error']))
+            massage.label_2.setStyleSheet("image: url(./icon/emoji_sad_circle [#541].png);")
+            massage.exec()
             print (person['error'])
             return None
 
@@ -458,7 +611,7 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
                 bytesPerLine = 3 * width
                 qFace = QtGui.QImage(face.data, width, height, bytesPerLine, QtGui.QImage.Format_BGR888)
                 pixmap = QtGui.QPixmap(qFace)
-                person_list.dynamicListWidget(person_['name'], pixmap, person_["label_post"])
+                person_list.dynamicListWidget(person_['name'], pixmap, person_["id_posts"])
             person_list.exec()
             index=person_list.index
 
@@ -468,8 +621,8 @@ class MainWindow_all_3(QtWidgets.QMainWindow):
             self.WorkWindow.label_surname.setText(self._translate("MainWindow", FamilyName))
             self.WorkWindow.label_name.setText(self._translate("MainWindow", Name +' '+FatherName))
             self.WorkWindow.label_number.setText(self._translate("MainWindow", person['number']))
-            self.WorkWindow.label_name_depart.setText(self._translate("MainWindow", person["label_department"]))
-            self.WorkWindow.label_name_post.setText(self._translate("MainWindow", person["label_post"]))
+            self.WorkWindow.label_name_depart.setText(self._translate("MainWindow", person["id_department"]))
+            self.WorkWindow.label_name_post.setText(self._translate("MainWindow", person["id_posts"]))
             self.WorkWindow.label_salaryl.setText(self._translate("MainWindow", str(person["salaryl"])))
             self.WorkWindow.label_asses_certification.setText(self._translate("MainWindow", str(person["certification"])))
             self.WorkWindow.label_asses_bonus.setText(self._translate("MainWindow", str(person["bonus"])))

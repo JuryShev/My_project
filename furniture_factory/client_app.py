@@ -43,6 +43,33 @@ class ServerConnector():
         result = requests.post(f"{self.url}/furniture/delete_row_{self.name_db}/",
                                json=data_send)
         return result
+
+    def edit_associated_file(self, data_send):
+        result = requests.post(f"{self.url}/furniture/edit_associated_file_{self.name_db}/",
+                               json=data_send)
+        return result
+    def edit_person(self, data_send, name_column_file):
+        name_keys=list(data_send["tables"]["personal"][0].keys())[1:]
+        result=''
+        flag_edit_avtar=0
+        if 'dir_avatar' in name_keys:
+            data_send['names_column_file']=name_column_file
+            result=self.edit_associated_file(data_send).content
+            result = result.decode('utf-8')
+            flag_edit_avtar=1
+            data_send["tables"]["personal"][0].pop(name_column_file['personal'])
+            if result!='ok':
+                return result
+
+        if flag_edit_avtar==1 and len(name_keys)==1:
+            return result
+        elif (flag_edit_avtar==1 and len(name_keys)>1) or flag_edit_avtar==0:
+
+            result=self.edit_table(data_send).content
+        return result.decode('utf-8')
+
+
+
     def del_person(self, data_send, names_column_file:dir ):
 
         data_send['names_column_file']=names_column_file
