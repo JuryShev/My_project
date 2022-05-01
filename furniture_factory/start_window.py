@@ -12,7 +12,7 @@ from PyQt5 import QtCore, QtGui, QtWidgets
 
 
 class Ui_MainWindow(object):
-    def setupUi(self, MainWindow):
+    def setupUi(self, MainWindow ):
         MainWindow.setObjectName("MainWindow")
         MainWindow.resize(784, 545)
         MainWindow.setStyleSheet("background-color: rgb(74, 80, 106);")
@@ -57,7 +57,7 @@ class Ui_MainWindow(object):
         self.pushButton_Creat.setStyleSheet("QPushButton" "{" "background-color: rgb(52, 154, 159);" "}""QPushButton::hover" "{" "background-color: rgb(48, 129, 159);" "}")
         self.pushButton_Creat.setText("")
         icon = QtGui.QIcon()
-        icon.addPixmap(QtGui.QPixmap("C:\\Users\\Yura\\PycharmProjects\\pythonProject\\furniture_factory\\GUI_designer\\icon/window_plus [#1463].png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon.addPixmap(QtGui.QPixmap("C:\\Users\\Yura\\PycharmProjects\\pythonProject\\my_project\\furniture_factory\\GUI_designer\\icon/window_plus [#1463].png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.pushButton_Creat.setIcon(icon)
         self.pushButton_Creat.setIconSize(QtCore.QSize(37, 37))
         self.pushButton_Creat.setObjectName("pushButton")
@@ -66,7 +66,7 @@ class Ui_MainWindow(object):
         self.pushButton_Open.setStyleSheet("QPushButton" "{" "background-color: rgb(52, 154, 159);" "}""QPushButton::hover" "{" "background-color: rgb(48, 129, 159);" "}")
         self.pushButton_Open.setText("")
         icon1 = QtGui.QIcon()
-        icon1.addPixmap(QtGui.QPixmap("C:\\Users\\Yura\\PycharmProjects\\pythonProject\\furniture_factory\\GUI_designer\\icon/icon_open_white2.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
+        icon1.addPixmap(QtGui.QPixmap("C:\\Users\\Yura\\PycharmProjects\\pythonProject\\my_project\\furniture_factory\\GUI_designer\\icon/icon_open_white2.png"), QtGui.QIcon.Normal, QtGui.QIcon.Off)
         self.pushButton_Open.setIcon(icon1)
         self.pushButton_Open.setIconSize(QtCore.QSize(40, 40))
         self.pushButton_Open.setObjectName("pushButton_2")
@@ -87,11 +87,11 @@ class Ui_MainWindow(object):
         self.label_4.setText(_translate("MainWindow", "Открыть мое предприятие"))
 
 
-# if __name__ == "__main__":
-#     import sys
-#     app = QtWidgets.QApplication(sys.argv)
-#     MainWindow = QtWidgets.QMainWindow()
-#     ui = Ui_MainWindow()
-#     ui.setupUi(MainWindow)
-#     MainWindow.show()
-#     sys.exit(app.exec_())
+if __name__ == "__main__":
+    import sys
+    app = QtWidgets.QApplication(sys.argv)
+    MainWindow = QtWidgets.QMainWindow()
+    ui = Ui_MainWindow()
+    ui.setupUi(MainWindow)
+    MainWindow.show()
+    sys.exit(app.exec_())

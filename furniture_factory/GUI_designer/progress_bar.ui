@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>689</width>
-    <height>78</height>
+    <height>77</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,10 +22,10 @@
    </property>
    <property name="geometry">
     <rect>
-     <x>10</x>
-     <y>30</y>
-     <width>671</width>
-     <height>10</height>
+     <x>0</x>
+     <y>39</y>
+     <width>695</width>
+     <height>11</height>
     </rect>
    </property>
    <property name="styleSheet">
@@ -40,6 +40,51 @@
    <property name="format">
     <string/>
    </property>
+  </widget>
+  <widget class="QFrame" name="frame">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>691</width>
+     <height>39</height>
+    </rect>
+   </property>
+   <property name="styleSheet">
+    <string notr="true">background-color: rgb(123, 133, 175);</string>
+   </property>
+   <property name="frameShape">
+    <enum>QFrame::StyledPanel</enum>
+   </property>
+   <property name="frameShadow">
+    <enum>QFrame::Raised</enum>
+   </property>
+   <widget class="QLabel" name="label">
+    <property name="geometry">
+     <rect>
+      <x>290</x>
+      <y>10</y>
+      <width>201</width>
+      <height>20</height>
+     </rect>
+    </property>
+    <property name="font">
+     <font>
+      <family>Roboto</family>
+      <pointsize>11</pointsize>
+      <weight>50</weight>
+      <italic>false</italic>
+      <bold>false</bold>
+      <underline>false</underline>
+     </font>
+    </property>
+    <property name="styleSheet">
+     <string notr="true">color: rgb(255, 255, 255);</string>
+    </property>
+    <property name="text">
+     <string>связь с сервером...</string>
+    </property>
+   </widget>
   </widget>
  </widget>
  <resources/>
